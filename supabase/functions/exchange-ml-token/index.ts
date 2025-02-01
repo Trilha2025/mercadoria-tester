@@ -15,7 +15,7 @@ serve(async (req) => {
     console.log('Received params:', params)
 
     // Adiciona o client_secret aos parâmetros
-    const fullParams = `${params}&client_secret=${Deno.env.get('ML_CLIENT_SECRET')}`
+    const fullParams = `${params}&client_secret=vYoUWQlJYl2nhOB9UXTDQPNJAXNbARMJ`
     console.log('Making request to ML API with params:', fullParams)
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {

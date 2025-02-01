@@ -37,16 +37,20 @@ export const exchangeCodeForToken = async (code: string, codeVerifier: string): 
     codeVerifier: codeVerifier.slice(0, 10) + '...'
   });
 
+  console.log('Code recebido:', code);
+
+  const bodyParams = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: import.meta.env.VITE_ML_CLIENT_ID,
+    client_secret: 'vYoUWQlJYl2nhOB9UXTDQPNJAXNbARMJ',
+    code: code,
+    redirect_uri: import.meta.env.VITE_ML_REDIRECT_URI,
+    code_verifier: codeVerifier
+  }).toString();
+
   const { data, error } = await supabase.functions.invoke('exchange-ml-token', {
     body: {
-      params: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: import.meta.env.VITE_ML_CLIENT_ID,
-        client_secret: import.meta.env.ML_CLIENT_SECRET,
-        code,
-        redirect_uri: import.meta.env.VITE_ML_REDIRECT_URI,
-        code_verifier: codeVerifier
-      }).toString()
+      params: bodyParams
     }
   });
 

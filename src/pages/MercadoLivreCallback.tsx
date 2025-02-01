@@ -41,6 +41,7 @@ const MercadoLivreCallback = () => {
 
         console.log('Iniciando troca de código por token...');
         const codeVerifier = localStorage.getItem('code_verifier');
+        console.log('Código de Verificação:', codeVerifier);
         const tokenData = await exchangeCodeForToken(code, codeVerifier);
         console.log('Resposta da troca de token:', tokenData);
         
@@ -147,7 +148,7 @@ const MercadoLivreCallback = () => {
         {status === 'error' && (
           <div className="text-center space-y-4">
             <XCircle className="h-12 w-12 text-red-500 mx-auto" />
-            <h2 className="text-2xl font-semibold text-red-600">Falha na Autenticação</h2>
+            <h2 className="text-2xl font-semibold text-red-600">Falha na Autenticação.</h2>
             <p className="text-gray-600">{errorMessage}</p>
             <Button 
               onClick={() => navigate('/')}
