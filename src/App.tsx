@@ -11,7 +11,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/callback/mercadolivre" element={<MercadoLivreCallback />} />
+        <Route path="/ml-callback" element={<MercadoLivreCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
