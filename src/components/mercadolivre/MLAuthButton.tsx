@@ -23,48 +23,44 @@ const MLAuthButton = ({ isAuthenticated, onLogout, userData }: MLAuthButtonProps
 
       console.log('Iniciando processo de autenticação para usuário:', user.id);
       
-      // Primeiro, tenta atualizar uma conexão existente
-      const { data: existingConnection, error: fetchError } = await supabase
+      // Primeiro, limpa qualquer conexão existente para evitar conflitos
+      const { error: deleteError } = await supabase
         .from('mercadolivre_connections')
-        .select()
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Erro ao limpar conexão existente:', deleteError);
+        throw new Error('Erro ao preparar nova conexão');
+      }
+
+      // Cria uma nova conexão com o code_verifier
+      console.log('Criando nova conexão com code_verifier');
+      const { error: insertError } = await supabase
+        .from('mercadolivre_connections')
+        .insert([{
+          user_id: user.id,
+          code_verifier: verifier,
+          access_token: 'pending',
+          refresh_token: 'pending',
+          ml_user_id: 'pending'
+        }]);
+
+      if (insertError) {
+        console.error('Erro ao criar nova conexão:', insertError);
+        throw new Error('Erro ao criar nova conexão');
+      }
+
+      // Verifica se a conexão foi realmente criada
+      const { data: checkConnection, error: checkError } = await supabase
+        .from('mercadolivre_connections')
+        .select('code_verifier')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error('Erro ao verificar conexão existente:', fetchError);
-        throw new Error('Erro ao verificar conexão existente');
-      }
-
-      if (existingConnection) {
-        console.log('Atualizando conexão existente com novo code_verifier');
-        const { error: updateError } = await supabase
-          .from('mercadolivre_connections')
-          .update({ 
-            code_verifier: verifier,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id);
-
-        if (updateError) {
-          console.error('Erro ao atualizar code_verifier:', updateError);
-          throw new Error('Erro ao atualizar conexão');
-        }
-      } else {
-        console.log('Criando nova conexão com code_verifier');
-        const { error: insertError } = await supabase
-          .from('mercadolivre_connections')
-          .insert([{
-            user_id: user.id,
-            code_verifier: verifier,
-            access_token: 'pending',
-            refresh_token: 'pending',
-            ml_user_id: 'pending'
-          }]);
-
-        if (insertError) {
-          console.error('Erro ao criar nova conexão:', insertError);
-          throw new Error('Erro ao criar nova conexão');
-        }
+      if (checkError || !checkConnection?.code_verifier) {
+        console.error('Erro ao verificar nova conexão:', checkError);
+        throw new Error('Falha ao salvar code_verifier');
       }
       
       const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
