@@ -21,9 +21,9 @@ export const initializeAuth = async () => {
       .from('mercadolivre_connections')
       .select()
       .eq('user_id', user.id)
-      .maybeSingle();
+      .single();
 
-    if (fetchError) {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('[ML Auth] Erro ao buscar conexão existente:', fetchError);
       throw new Error('Failed to check existing connection');
     }
@@ -31,7 +31,7 @@ export const initializeAuth = async () => {
     let connection;
     
     if (existingConnection) {
-      // Atualizar conexão existente mantendo o code_verifier
+      // Atualizar conexão existente
       console.log('[ML Auth] Atualizando conexão existente:', existingConnection.id);
       const { data: updatedConnection, error: updateError } = await supabase
         .from('mercadolivre_connections')
@@ -65,7 +65,7 @@ export const initializeAuth = async () => {
         .select()
         .single();
 
-      if (insertError || !newConnection) {
+      if (insertError) {
         console.error('[ML Auth] Erro ao criar conexão:', insertError);
         throw new Error('Failed to create connection');
       }
@@ -73,7 +73,7 @@ export const initializeAuth = async () => {
     }
 
     // Verificar se o code_verifier foi salvo corretamente
-    if (!connection.code_verifier) {
+    if (!connection?.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');
       throw new Error('Code verifier not saved correctly');
     }
@@ -84,11 +84,11 @@ export const initializeAuth = async () => {
       code_verifier_length: connection.code_verifier?.length
     });
 
-    console.log('[ML Auth] Redirecionando para autenticação do ML...');
+    const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
+    
+    console.log('[ML Auth] URL de autenticação gerada:', authUrl);
 
-    return {
-      authUrl: `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`
-    };
+    return { authUrl };
   } catch (error) {
     console.error('[ML Auth] Error in initializeAuth:', error);
     throw error;
