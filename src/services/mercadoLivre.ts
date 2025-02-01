@@ -41,7 +41,7 @@ export const initializeAuth = async () => {
           refresh_token: 'pending',
           ml_user_id: 'pending'
         })
-        .eq('user_id', user.id)
+        .eq('id', existingConnection.id)  // Changed from user_id to id for more precise update
         .select()
         .single();
 
@@ -73,7 +73,13 @@ export const initializeAuth = async () => {
     }
 
     // Verificar se o code_verifier foi salvo corretamente
-    if (!connection?.code_verifier) {
+    const { data: verificationCheck } = await supabase
+      .from('mercadolivre_connections')
+      .select('code_verifier')
+      .eq('id', connection.id)
+      .single();
+
+    if (!verificationCheck?.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');
       throw new Error('Code verifier not saved correctly');
     }
