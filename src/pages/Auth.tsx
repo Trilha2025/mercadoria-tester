@@ -25,7 +25,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/ml-callback`,
+            emailRedirectTo: window.location.origin,
           },
         });
         
@@ -48,7 +48,7 @@ const Auth = () => {
           throw error;
         }
         
-        navigate("/ml-callback");
+        navigate("/");
       }
     } catch (error: any) {
       toast({
