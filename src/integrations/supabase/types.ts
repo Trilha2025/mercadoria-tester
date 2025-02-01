@@ -9,7 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      mercadolivre_connections: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          id: string
+          ml_email: string | null
+          ml_nickname: string | null
+          ml_user_id: string
+          refresh_token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          id?: string
+          ml_email?: string | null
+          ml_nickname?: string | null
+          ml_user_id: string
+          refresh_token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          id?: string
+          ml_email?: string | null
+          ml_nickname?: string | null
+          ml_user_id?: string
+          refresh_token?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
