@@ -21,37 +21,61 @@ const MLAuthButton = ({ isAuthenticated, onLogout, userData }: MLAuthButtonProps
         throw new Error('User not authenticated');
       }
 
-      const { data: existingConnection } = await supabase
+      console.log('Iniciando processo de autenticação para usuário:', user.id);
+      
+      // Primeiro, tenta atualizar uma conexão existente
+      const { data: existingConnection, error: fetchError } = await supabase
         .from('mercadolivre_connections')
         .select()
         .eq('user_id', user.id)
         .maybeSingle();
 
+      if (fetchError) {
+        console.error('Erro ao verificar conexão existente:', fetchError);
+        throw new Error('Erro ao verificar conexão existente');
+      }
+
       if (existingConnection) {
-        await supabase
+        console.log('Atualizando conexão existente com novo code_verifier');
+        const { error: updateError } = await supabase
           .from('mercadolivre_connections')
-          .update({ code_verifier: verifier })
+          .update({ 
+            code_verifier: verifier,
+            updated_at: new Date().toISOString()
+          })
           .eq('user_id', user.id);
+
+        if (updateError) {
+          console.error('Erro ao atualizar code_verifier:', updateError);
+          throw new Error('Erro ao atualizar conexão');
+        }
       } else {
-        await supabase
+        console.log('Criando nova conexão com code_verifier');
+        const { error: insertError } = await supabase
           .from('mercadolivre_connections')
           .insert([{
             user_id: user.id,
             code_verifier: verifier,
-            access_token: 'temporary',
-            refresh_token: 'temporary',
-            ml_user_id: 'temporary'
+            access_token: 'pending',
+            refresh_token: 'pending',
+            ml_user_id: 'pending'
           }]);
+
+        if (insertError) {
+          console.error('Erro ao criar nova conexão:', insertError);
+          throw new Error('Erro ao criar nova conexão');
+        }
       }
       
       const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
       
+      console.log('Redirecionando para URL de autenticação do ML');
       window.location.href = authUrl;
     } catch (error) {
       console.error('Erro na autenticação:', error);
       toast({
         title: "Erro",
-        description: "Falha no processo de autenticação",
+        description: error instanceof Error ? error.message : "Falha no processo de autenticação",
         variant: "destructive",
       });
     }

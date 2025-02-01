@@ -35,26 +35,30 @@ const MercadoLivreCallback = () => {
       }
 
       try {
-        // Get code_verifier from Supabase
+        // Get user and code_verifier
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           throw new Error('User not authenticated');
         }
 
-        const { data: connection } = await supabase
+        console.log('Buscando conexão do ML para o usuário:', user.id);
+        const { data: connection, error: connectionError } = await supabase
           .from('mercadolivre_connections')
           .select('code_verifier')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
+
+        if (connectionError) {
+          console.error('Erro ao buscar conexão:', connectionError);
+          throw new Error('Erro ao buscar conexão com Mercado Livre');
+        }
 
         if (!connection?.code_verifier) {
-          throw new Error('Code verifier não encontrado');
+          console.error('Code verifier não encontrado na conexão:', connection);
+          throw new Error('Code verifier não encontrado. Por favor, tente conectar novamente.');
         }
 
         console.log('Iniciando troca de código por token...');
-        console.log('Código recebido:', code);
-        console.log('URL de redirecionamento:', import.meta.env.VITE_ML_REDIRECT_URI);
-        
         const tokenData = await exchangeCodeForToken(code, connection.code_verifier);
         console.log('Resposta da troca de token:', tokenData);
         
@@ -105,7 +109,7 @@ const MercadoLivreCallback = () => {
         toast({
           variant: "destructive",
           title: "Erro de Autenticação",
-          description: "Falha ao completar processo de autenticação",
+          description: error instanceof Error ? error.message : "Falha ao completar processo de autenticação",
         });
       }
     };
