@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { exchangeCodeForToken } from '@/utils/mercadoLivre';
+import { saveMLConnection } from '@/utils/supabaseML';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,12 +46,6 @@ const MercadoLivreCallback = () => {
           throw new Error('No access token received');
         }
 
-        console.log('Token received successfully');
-        localStorage.setItem('ml_access_token', tokenData.access_token);
-        if (tokenData.refresh_token) {
-          localStorage.setItem('ml_refresh_token', tokenData.refresh_token);
-        }
-
         // Validate token by making a test request
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
@@ -63,6 +58,16 @@ const MercadoLivreCallback = () => {
         }
 
         const userData = await userResponse.json();
+        
+        // Salvar dados no Supabase
+        await saveMLConnection({
+          ml_user_id: userData.id,
+          ml_nickname: userData.nickname,
+          ml_email: userData.email,
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+        });
+
         console.log('Successfully authenticated as:', userData.nickname);
         
         setStatus('success');

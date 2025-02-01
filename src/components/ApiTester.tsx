@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { generateCodeChallenge, exchangeCodeForToken, getUserData, refreshToken } from '@/utils/mercadoLivre';
+import { generateCodeChallenge } from '@/utils/mercadoLivre';
+import { saveMLConnection, getMLConnection, deleteMLConnection } from '@/utils/supabaseML';
 
 const ApiTester = () => {
   const [endpoint, setEndpoint] = useState('');
@@ -14,25 +15,24 @@ const ApiTester = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('ml_access_token');
-    setIsAuthenticated(!!accessToken);
-    
-    if (accessToken) {
-      fetchUserData(accessToken);
-    }
+    checkConnection();
   }, []);
 
-  const fetchUserData = async (accessToken: string) => {
+  const checkConnection = async () => {
     try {
-      const response = await fetch('https://api.mercadolibre.com/users/me', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      const data = await response.json();
-      setUserData(data);
+      const connection = await getMLConnection();
+      if (connection) {
+        setIsAuthenticated(true);
+        const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
+          headers: {
+            'Authorization': `Bearer ${connection.access_token}`
+          }
+        });
+        const userData = await userResponse.json();
+        setUserData(userData);
+      }
     } catch (error) {
-      console.error('Erro ao buscar dados do usuário:', error);
+      console.error('Erro ao verificar conexão:', error);
     }
   };
 
@@ -48,13 +48,13 @@ const ApiTester = () => {
 
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem('ml_access_token');
+      const connection = await getMLConnection();
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
       
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
+      if (connection) {
+        headers['Authorization'] = `Bearer ${connection.access_token}`;
       }
 
       const res = await fetch(endpoint, { headers });
@@ -94,16 +94,26 @@ const ApiTester = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('ml_access_token');
-    localStorage.removeItem('ml_refresh_token');
-    localStorage.removeItem('code_verifier');
-    setIsAuthenticated(false);
-    setUserData(null);
-    toast({
-      title: "Sucesso",
-      description: "Desconectado com sucesso",
-    });
+  const handleLogout = async () => {
+    try {
+      await deleteMLConnection();
+      localStorage.removeItem('ml_access_token');
+      localStorage.removeItem('ml_refresh_token');
+      localStorage.removeItem('code_verifier');
+      setIsAuthenticated(false);
+      setUserData(null);
+      toast({
+        title: "Sucesso",
+        description: "Desconectado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao desconectar:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao desconectar",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
