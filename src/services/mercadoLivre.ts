@@ -31,7 +31,7 @@ export const initializeAuth = async () => {
     let connection;
     
     if (existingConnection) {
-      // Atualizar conexão existente
+      // Atualizar conexão existente mantendo o code_verifier
       console.log('[ML Auth] Atualizando conexão existente:', existingConnection.id);
       const { data: updatedConnection, error: updateError } = await supabase
         .from('mercadolivre_connections')
