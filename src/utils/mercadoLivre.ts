@@ -30,7 +30,7 @@ export const exchangeCodeForToken = async (code: string, verifier: string) => {
     client_id: import.meta.env.VITE_ML_CLIENT_ID,
     code_verifier: verifier,
     code: code,
-    redirect_uri: 'https://atrilhadoecommerce.lovable.dev/ml-callback',
+    redirect_uri: 'https://atrilhadoecommerce.vercel.app/ml-callback',
   });
 
   const response = await fetch('https://api.mercadolibre.com/oauth/token', {
