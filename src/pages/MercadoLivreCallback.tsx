@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const MercadoLivreCallback = () => {
   const navigate = useNavigate();
@@ -34,10 +35,19 @@ const MercadoLivreCallback = () => {
       }
 
       try {
-        const verifier = localStorage.getItem('code_verifier');
-        console.log('Code verifier:', verifier);
-        
-        if (!verifier) {
+        // Get code_verifier from Supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        const { data: connection } = await supabase
+          .from('mercadolivre_connections')
+          .select('code_verifier')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!connection?.code_verifier) {
           throw new Error('Code verifier não encontrado');
         }
 
@@ -45,7 +55,7 @@ const MercadoLivreCallback = () => {
         console.log('Código recebido:', code);
         console.log('URL de redirecionamento:', import.meta.env.VITE_ML_REDIRECT_URI);
         
-        const tokenData = await exchangeCodeForToken(code, verifier);
+        const tokenData = await exchangeCodeForToken(code, connection.code_verifier);
         console.log('Resposta da troca de token:', tokenData);
         
         if (!tokenData || !tokenData.access_token) {

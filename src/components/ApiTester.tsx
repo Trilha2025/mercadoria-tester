@@ -79,7 +79,21 @@ const ApiTester = () => {
   const handleAuth = async () => {
     try {
       const { verifier, challenge } = await generateCodeChallenge();
-      localStorage.setItem('code_verifier', verifier);
+      
+      // Save code_verifier to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      await supabase
+        .from('mercadolivre_connections')
+        .upsert({
+          user_id: user.id,
+          code_verifier: verifier
+        }, {
+          onConflict: 'user_id'
+        });
       
       const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
       
@@ -97,9 +111,6 @@ const ApiTester = () => {
   const handleLogout = async () => {
     try {
       await deleteMLConnection();
-      localStorage.removeItem('ml_access_token');
-      localStorage.removeItem('ml_refresh_token');
-      localStorage.removeItem('code_verifier');
       setIsAuthenticated(false);
       setUserData(null);
       toast({
