@@ -43,7 +43,7 @@ export const initializeAuth = async () => {
         })
         .eq('user_id', user.id)
         .select()
-        .maybeSingle();
+        .single();
 
       if (updateError) {
         console.error('[ML Auth] Erro ao atualizar conexão:', updateError);
@@ -63,7 +63,7 @@ export const initializeAuth = async () => {
           ml_user_id: 'pending'
         }])
         .select()
-        .maybeSingle();
+        .single();
 
       if (insertError || !newConnection) {
         console.error('[ML Auth] Erro ao criar conexão:', insertError);
