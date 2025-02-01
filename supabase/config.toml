@@ -25,6 +25,6 @@ enabled = true
 [realtime]
 enabled = true
 
-[[functions]]
-name = "exchange-ml-token"
+[functions]
+[functions.exchange-ml-token]
 verify_jwt = false
