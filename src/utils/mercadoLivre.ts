@@ -33,7 +33,7 @@ export const exchangeCodeForToken = async (code: string, verifier: string) => {
   params.append('client_id', import.meta.env.VITE_ML_CLIENT_ID);
   params.append('code_verifier', verifier);
   params.append('code', code);
-  params.append('redirect_uri', 'https://mercadoria-tester.vercel.app/ml-callback');
+  params.append('redirect_uri', import.meta.env.VITE_ML_REDIRECT_URI);
 
   const response = await fetch('https://api.mercadolibre.com/oauth/token', {
     method: 'POST',
