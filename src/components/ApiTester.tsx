@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { generateCodeChallenge } from '@/utils/mercadoLivre';
 import { saveMLConnection, getMLConnection, deleteMLConnection } from '@/utils/supabaseML';
+import { supabase } from "@/integrations/supabase/client";
 
 const ApiTester = () => {
   const [endpoint, setEndpoint] = useState('');
