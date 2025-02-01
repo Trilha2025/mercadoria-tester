@@ -12,7 +12,7 @@ export const saveMLConnection = async (userData: MLConnectionData) => {
   const { data: existingConnection, error: fetchError } = await supabase
     .from('mercadolivre_connections')
     .select()
-    .single();
+    .maybeSingle();
 
   const user = supabase.auth.getUser();
   if (!user) {
@@ -44,7 +44,7 @@ export const getMLConnection = async () => {
   const { data, error } = await supabase
     .from('mercadolivre_connections')
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return null;
   return data;
