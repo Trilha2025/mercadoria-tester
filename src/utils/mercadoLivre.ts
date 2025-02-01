@@ -4,10 +4,10 @@ import type { MLTokenResponse } from "@/types/mercadoLivre";
 export const generateCodeChallenge = async () => {
   const verifier = generateRandomString();
   const challenge = await generateChallenge(verifier);
-  console.log('Novo code challenge gerado:', {
-    verifier: verifier.slice(0, 10) + '...',
-    challenge: challenge.slice(0, 10) + '...'
-  });
+  // console.log('Novo code challenge gerado:', {
+  //   verifier: verifier.slice(0, 10) + '...',
+  //   challenge: challenge.slice(0, 10) + '...'
+  // });
   return { verifier, challenge };
 };
 
@@ -32,10 +32,10 @@ const base64URLEncode = (buffer: Uint8Array) => {
 };
 
 export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<MLTokenResponse> => {
-  console.log('Iniciando troca de código por token...', {
-    code: code.slice(0, 10) + '...',
-    codeVerifier: codeVerifier.slice(0, 10) + '...'
-  });
+  // console.log('Iniciando troca de código por token...', {
+  //   code: code.slice(0, 10) + '...',
+  //   codeVerifier: codeVerifier.slice(0, 10) + '...'
+  // });
 
   console.log('Code recebido:', code);
 

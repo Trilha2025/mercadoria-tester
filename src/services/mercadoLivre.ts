@@ -11,10 +11,10 @@ export const initializeAuth = async () => {
     console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
     const { verifier, challenge } = await generateCodeChallenge();
-    console.log('[ML Auth] Code verifier gerado:', {
-      verifier: verifier.slice(0, 10) + '...',
-      challenge: challenge.slice(0, 10) + '...'
-    });
+    // console.log('[ML Auth] Code verifier gerado:', {
+    //   verifier: verifier.slice(0, 10) + '...',
+    //   challenge: challenge.slice(0, 10) + '...'
+    // });
 
     const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
