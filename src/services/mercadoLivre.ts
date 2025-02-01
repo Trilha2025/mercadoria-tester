@@ -21,9 +21,9 @@ export const initializeAuth = async () => {
       .from('mercadolivre_connections')
       .select()
       .eq('user_id', user.id)
-      .maybeSingle();
+      .single();
 
-    if (fetchError) {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('[ML Auth] Erro ao buscar conexão existente:', fetchError);
       throw new Error('Failed to check existing connection');
     }
@@ -37,9 +37,6 @@ export const initializeAuth = async () => {
         .from('mercadolivre_connections')
         .update({
           code_verifier: verifier,
-          access_token: 'pending',
-          refresh_token: 'pending',
-          ml_user_id: 'pending'
         })
         .eq('user_id', user.id)
         .select()
@@ -58,9 +55,9 @@ export const initializeAuth = async () => {
         .insert([{
           user_id: user.id,
           code_verifier: verifier,
-          access_token: 'pending',
-          refresh_token: 'pending',
-          ml_user_id: 'pending'
+          access_token: '',
+          refresh_token: '',
+          ml_user_id: '',
         }])
         .select()
         .single();
@@ -77,7 +74,7 @@ export const initializeAuth = async () => {
       .from('mercadolivre_connections')
       .select('code_verifier')
       .eq('user_id', user.id)
-      .maybeSingle();
+      .single();
 
     if (!verificationCheck?.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');

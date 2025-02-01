@@ -45,8 +45,7 @@ const MercadoLivreCallback = () => {
           .from('mercadolivre_connections')
           .select('*')
           .eq('user_id', user.id)
-          .eq('access_token', 'pending')
-          .maybeSingle();
+          .single();
 
         if (connectionError) {
           console.error('Erro ao buscar conexão:', connectionError);
@@ -54,13 +53,8 @@ const MercadoLivreCallback = () => {
         }
 
         if (!connection) {
-          console.error('Nenhuma conexão pendente encontrada');
-          throw new Error('Nenhuma conexão pendente encontrada. Por favor, tente conectar novamente.');
-        }
-
-        if (!connection.code_verifier) {
-          console.error('Code verifier não encontrado na conexão:', connection);
-          throw new Error('Code verifier não encontrado. Por favor, tente conectar novamente.');
+          console.error('Nenhuma conexão encontrada');
+          throw new Error('Nenhuma conexão encontrada. Por favor, tente conectar novamente.');
         }
 
         console.log('Iniciando troca de código por token...');
