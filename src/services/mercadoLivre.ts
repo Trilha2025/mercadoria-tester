@@ -16,12 +16,17 @@ export const initializeAuth = async () => {
       challenge: challenge.slice(0, 10) + '...' 
     });
 
-    // Buscar conexão existente
-    const { data: existingConnection } = await supabase
+    // Primeiro, verificar se já existe uma conexão para o usuário
+    const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
       .select()
       .eq('user_id', user.id)
       .maybeSingle();
+
+    if (fetchError) {
+      console.error('[ML Auth] Erro ao buscar conexão existente:', fetchError);
+      throw new Error('Failed to check existing connection');
+    }
 
     let connection;
     
@@ -67,17 +72,17 @@ export const initializeAuth = async () => {
       connection = newConnection;
     }
 
-    console.log('[ML Auth] Conexão configurada com sucesso:', {
-      id: connection.id,
-      user_id: connection.user_id,
-      code_verifier_length: connection.code_verifier?.length
-    });
-
     // Verificar se o code_verifier foi salvo corretamente
     if (!connection.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');
       throw new Error('Code verifier not saved correctly');
     }
+
+    console.log('[ML Auth] Conexão configurada com sucesso:', {
+      id: connection.id,
+      user_id: connection.user_id,
+      code_verifier_length: connection.code_verifier?.length
+    });
 
     console.log('[ML Auth] Redirecionando para autenticação do ML...');
 
