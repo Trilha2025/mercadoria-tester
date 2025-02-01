@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { exchangeCodeForToken } from '@/utils/mercadoLivre';
 import { saveMLConnection } from '@/utils/supabaseML';
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Loader } from "lucide-react";
 
 const MercadoLivreCallback = () => {
   const navigate = useNavigate();
@@ -15,20 +15,20 @@ const MercadoLivreCallback = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const validateConnection = async () => {
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
       if (error || !code) {
-        console.error('Authentication error:', errorDescription);
+        console.error('Erro de autenticação:', errorDescription);
         setStatus('error');
-        setErrorMessage(errorDescription || 'An error occurred during authentication');
+        setErrorMessage(errorDescription || 'Ocorreu um erro durante a autenticação');
         toast({
           variant: "destructive",
-          title: "Authentication Error",
-          description: errorDescription || "Failed to authenticate with Mercado Livre",
+          title: "Erro de Autenticação",
+          description: errorDescription || "Falha ao autenticar com o Mercado Livre",
         });
         return;
       }
@@ -36,17 +36,17 @@ const MercadoLivreCallback = () => {
       try {
         const verifier = localStorage.getItem('code_verifier');
         if (!verifier) {
-          throw new Error('Code verifier not found');
+          throw new Error('Code verifier não encontrado');
         }
 
-        console.log('Exchanging code for token...');
+        console.log('Trocando código por token...');
         const tokenData = await exchangeCodeForToken(code, verifier);
         
         if (!tokenData || !tokenData.access_token) {
-          throw new Error('No access token received');
+          throw new Error('Token de acesso não recebido');
         }
 
-        // Validate token by making a test request
+        // Validar token fazendo uma requisição de teste
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
             'Authorization': `Bearer ${tokenData.access_token}`
@@ -54,7 +54,7 @@ const MercadoLivreCallback = () => {
         });
 
         if (!userResponse.ok) {
-          throw new Error('Failed to validate token');
+          throw new Error('Falha ao validar token');
         }
 
         const userData = await userResponse.json();
@@ -68,31 +68,31 @@ const MercadoLivreCallback = () => {
           refresh_token: tokenData.refresh_token,
         });
 
-        console.log('Successfully authenticated as:', userData.nickname);
+        console.log('Autenticado com sucesso como:', userData.nickname);
         
         setStatus('success');
         toast({
-          title: "Success",
-          description: `Successfully connected as ${userData.nickname}`,
+          title: "Sucesso",
+          description: `Conectado como ${userData.nickname}`,
         });
 
-        // Redirect after a short delay to show the success message
+        // Aguardar 3 segundos antes de redirecionar
         setTimeout(() => {
           navigate('/');
-        }, 2000);
+        }, 3000);
       } catch (error) {
-        console.error('Error during authentication:', error);
+        console.error('Erro durante autenticação:', error);
         setStatus('error');
-        setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
+        setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido ocorreu');
         toast({
           variant: "destructive",
-          title: "Authentication Error",
-          description: "Failed to complete authentication process",
+          title: "Erro de Autenticação",
+          description: "Falha ao completar processo de autenticação",
         });
       }
     };
 
-    handleCallback();
+    validateConnection();
   }, [location, navigate, toast]);
 
   return (
@@ -101,29 +101,29 @@ const MercadoLivreCallback = () => {
         {status === 'loading' && (
           <div className="text-center space-y-4">
             <Loader className="h-12 w-12 animate-spin mx-auto text-meli-yellow" />
-            <h2 className="text-2xl font-semibold">Authenticating...</h2>
-            <p className="text-gray-600">Please wait while we connect your account</p>
+            <h2 className="text-2xl font-semibold">Autenticando...</h2>
+            <p className="text-gray-600">Aguarde enquanto conectamos sua conta</p>
           </div>
         )}
 
         {status === 'success' && (
           <div className="text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h2 className="text-2xl font-semibold text-green-600">Successfully Connected!</h2>
-            <p className="text-gray-600">Redirecting to home page...</p>
+            <h2 className="text-2xl font-semibold text-green-600">Conectado com Sucesso!</h2>
+            <p className="text-gray-600">Redirecionando para a página inicial...</p>
           </div>
         )}
 
         {status === 'error' && (
           <div className="text-center space-y-4">
             <XCircle className="h-12 w-12 text-red-500 mx-auto" />
-            <h2 className="text-2xl font-semibold text-red-600">Authentication Failed</h2>
+            <h2 className="text-2xl font-semibold text-red-600">Falha na Autenticação</h2>
             <p className="text-gray-600">{errorMessage}</p>
             <Button 
               onClick={() => navigate('/')}
               className="mt-4"
             >
-              Return to Home
+              Voltar para a Página Inicial
             </Button>
           </div>
         )}
