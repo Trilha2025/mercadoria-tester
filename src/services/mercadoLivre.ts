@@ -21,9 +21,9 @@ export const initializeAuth = async () => {
       .from('mercadolivre_connections')
       .select()
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
+    if (fetchError) {
       console.error('[ML Auth] Erro ao buscar conexão existente:', fetchError);
       throw new Error('Failed to check existing connection');
     }
@@ -31,7 +31,7 @@ export const initializeAuth = async () => {
     let connection;
     
     if (existingConnection) {
-      // Atualizar conexão existente
+      // Atualizar conexão existente com novo code_verifier
       console.log('[ML Auth] Atualizando conexão existente:', existingConnection.id);
       const { data: updatedConnection, error: updateError } = await supabase
         .from('mercadolivre_connections')
@@ -41,7 +41,7 @@ export const initializeAuth = async () => {
           refresh_token: 'pending',
           ml_user_id: 'pending'
         })
-        .eq('id', existingConnection.id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -65,7 +65,7 @@ export const initializeAuth = async () => {
         .select()
         .single();
 
-      if (insertError) {
+      if (insertError || !newConnection) {
         console.error('[ML Auth] Erro ao criar conexão:', insertError);
         throw new Error('Failed to create connection');
       }
