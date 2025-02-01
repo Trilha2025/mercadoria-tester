@@ -10,12 +10,31 @@ const ApiTester = () => {
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const accessToken = localStorage.getItem('ml_access_token');
     setIsAuthenticated(!!accessToken);
+    
+    if (accessToken) {
+      fetchUserData(accessToken);
+    }
   }, []);
+
+  const fetchUserData = async (accessToken: string) => {
+    try {
+      const response = await fetch('https://api.mercadolibre.com/users/me', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error('Erro ao buscar dados do usuário:', error);
+    }
+  };
 
   const handleTest = async () => {
     if (!endpoint) {
@@ -80,6 +99,7 @@ const ApiTester = () => {
     localStorage.removeItem('ml_refresh_token');
     localStorage.removeItem('code_verifier');
     setIsAuthenticated(false);
+    setUserData(null);
     toast({
       title: "Sucesso",
       description: "Desconectado com sucesso",
@@ -93,12 +113,19 @@ const ApiTester = () => {
         
         <div className="mb-6">
           {isAuthenticated ? (
-            <Button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white mb-4 w-full"
-            >
-              Desconectar do Mercado Livre
-            </Button>
+            <>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <p className="text-green-800">
+                  Conectado como: {userData?.nickname || userData?.email || 'Carregando...'}
+                </p>
+              </div>
+              <Button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white mb-4 w-full"
+              >
+                Desconectar do Mercado Livre
+              </Button>
+            </>
           ) : (
             <Button
               onClick={handleAuth}
