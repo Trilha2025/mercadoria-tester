@@ -35,12 +35,18 @@ const MercadoLivreCallback = () => {
 
       try {
         const verifier = localStorage.getItem('code_verifier');
+        console.log('Code verifier:', verifier);
+        
         if (!verifier) {
           throw new Error('Code verifier não encontrado');
         }
 
-        console.log('Trocando código por token...');
+        console.log('Iniciando troca de código por token...');
+        console.log('Código recebido:', code);
+        console.log('URL de redirecionamento:', import.meta.env.VITE_ML_REDIRECT_URI);
+        
         const tokenData = await exchangeCodeForToken(code, verifier);
+        console.log('Resposta da troca de token:', tokenData);
         
         if (!tokenData || !tokenData.access_token) {
           throw new Error('Token de acesso não recebido');
@@ -54,10 +60,12 @@ const MercadoLivreCallback = () => {
         });
 
         if (!userResponse.ok) {
+          console.error('Erro na resposta da API:', await userResponse.text());
           throw new Error('Falha ao validar token');
         }
 
         const userData = await userResponse.json();
+        console.log('Dados do usuário recebidos:', userData);
         
         // Salvar dados no Supabase
         await saveMLConnection({
@@ -68,7 +76,7 @@ const MercadoLivreCallback = () => {
           refresh_token: tokenData.refresh_token,
         });
 
-        console.log('Autenticado com sucesso como:', userData.nickname);
+        console.log('Conexão salva com sucesso');
         
         setStatus('success');
         toast({
@@ -81,7 +89,7 @@ const MercadoLivreCallback = () => {
           navigate('/');
         }, 3000);
       } catch (error) {
-        console.error('Erro durante autenticação:', error);
+        console.error('Erro detalhado durante autenticação:', error);
         setStatus('error');
         setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido ocorreu');
         toast({

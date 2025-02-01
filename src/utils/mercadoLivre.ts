@@ -25,6 +25,12 @@ const base64URLEncode = (buffer: Uint8Array) => {
 };
 
 export const exchangeCodeForToken = async (code: string, verifier: string) => {
+  console.log('Iniciando troca de código por token com os seguintes parâmetros:');
+  console.log('- Code:', code);
+  console.log('- Verifier:', verifier);
+  console.log('- Client ID:', import.meta.env.VITE_ML_CLIENT_ID);
+  console.log('- Redirect URI:', import.meta.env.VITE_ML_REDIRECT_URI);
+
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: import.meta.env.VITE_ML_CLIENT_ID,
@@ -33,18 +39,29 @@ export const exchangeCodeForToken = async (code: string, verifier: string) => {
     redirect_uri: import.meta.env.VITE_ML_REDIRECT_URI,
   });
 
-  const response = await fetch('https://api.mercadolibre.com/oauth/token', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'content-type': 'application/x-www-form-urlencoded',
-    },
-    body: params.toString(),
-  });
+  try {
+    const response = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
 
-  if (!response.ok) {
-    throw new Error('Falha ao trocar código por token');
+    console.log('Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro na resposta:', errorText);
+      throw new Error(`Falha ao trocar código por token: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Resposta da API (token):', data);
+    return data;
+  } catch (error) {
+    console.error('Erro durante a troca de token:', error);
+    throw error;
   }
-
-  return response.json();
 };
