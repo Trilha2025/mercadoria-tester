@@ -10,67 +10,76 @@ export const initializeAuth = async () => {
 
     console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
-    // Primeiro, vamos limpar qualquer conexão pendente antiga
-    const { error: deleteError } = await supabase
-      .from('mercadolivre_connections')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('access_token', 'pending');
-
-    if (deleteError) {
-      console.error('[ML Auth] Erro ao limpar conexões pendentes:', deleteError);
-      throw new Error('Failed to clean pending connections');
-    }
-
     const { verifier, challenge } = await generateCodeChallenge();
     console.log('[ML Auth] Code verifier gerado:', { 
       verifier: verifier.slice(0, 10) + '...', 
       challenge: challenge.slice(0, 10) + '...' 
     });
 
-    // Criar nova conexão pendente
-    const { data: newConnection, error: insertError } = await supabase
+    // Buscar conexão existente
+    const { data: existingConnection } = await supabase
       .from('mercadolivre_connections')
-      .insert([{
-        user_id: user.id,
-        code_verifier: verifier,
-        access_token: 'pending',
-        refresh_token: 'pending',
-        ml_user_id: 'pending'
-      }])
       .select()
-      .single();
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (insertError || !newConnection) {
-      console.error('[ML Auth] Erro ao criar conexão:', insertError);
-      throw new Error('Failed to create connection');
+    let connection;
+    
+    if (existingConnection) {
+      // Atualizar conexão existente
+      console.log('[ML Auth] Atualizando conexão existente:', existingConnection.id);
+      const { data: updatedConnection, error: updateError } = await supabase
+        .from('mercadolivre_connections')
+        .update({
+          code_verifier: verifier,
+          access_token: 'pending',
+          refresh_token: 'pending',
+          ml_user_id: 'pending'
+        })
+        .eq('id', existingConnection.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('[ML Auth] Erro ao atualizar conexão:', updateError);
+        throw new Error('Failed to update connection');
+      }
+      connection = updatedConnection;
+    } else {
+      // Criar nova conexão
+      console.log('[ML Auth] Criando nova conexão para usuário:', user.id);
+      const { data: newConnection, error: insertError } = await supabase
+        .from('mercadolivre_connections')
+        .insert([{
+          user_id: user.id,
+          code_verifier: verifier,
+          access_token: 'pending',
+          refresh_token: 'pending',
+          ml_user_id: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (insertError || !newConnection) {
+        console.error('[ML Auth] Erro ao criar conexão:', insertError);
+        throw new Error('Failed to create connection');
+      }
+      connection = newConnection;
     }
 
-    console.log('[ML Auth] Conexão pendente criada com sucesso:', {
-      id: newConnection.id,
-      user_id: newConnection.user_id,
-      code_verifier_length: newConnection.code_verifier?.length
+    console.log('[ML Auth] Conexão configurada com sucesso:', {
+      id: connection.id,
+      user_id: connection.user_id,
+      code_verifier_length: connection.code_verifier?.length
     });
 
-    // Verificar se a conexão foi realmente criada
-    const { data: verifyConnection, error: verifyError } = await supabase
-      .from('mercadolivre_connections')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('access_token', 'pending')
-      .single();
-
-    if (verifyError || !verifyConnection) {
-      console.error('[ML Auth] Erro ao verificar conexão:', verifyError);
-      throw new Error('Failed to verify connection creation');
-    }
-
-    if (!verifyConnection.code_verifier) {
+    // Verificar se o code_verifier foi salvo corretamente
+    if (!connection.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');
       throw new Error('Code verifier not saved correctly');
     }
 
-    console.log('[ML Auth] Conexão verificada com sucesso. Redirecionando para ML...');
+    console.log('[ML Auth] Redirecionando para autenticação do ML...');
 
     return {
       authUrl: `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`
