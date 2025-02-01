@@ -41,22 +41,18 @@ export const exchangeCodeForToken = async (code: string, codeVerifier: string) =
   params.append('redirect_uri', import.meta.env.VITE_ML_REDIRECT_URI);
   params.append('code_verifier', codeVerifier);
 
-  const response = await fetch('https://api.mercadolibre.com/oauth/token', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'content-type': 'application/x-www-form-urlencoded'
-    },
-    body: params
+  // Agora vamos usar uma Edge Function do Supabase para fazer a requisição com o client_secret
+  const { data, error } = await supabase.functions.invoke('exchange-ml-token', {
+    body: {
+      params: params.toString()
+    }
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Erro na resposta do ML:', errorText);
-    throw new Error(`Failed to exchange code for token: ${errorText}`);
+  if (error) {
+    console.error('Erro na troca de token:', error);
+    throw new Error(`Failed to exchange code for token: ${error.message}`);
   }
 
-  const data = await response.json();
   console.log('Token obtido com sucesso');
   return data;
 };
