@@ -12,9 +12,11 @@ serve(async (req) => {
 
   try {
     const { params } = await req.json()
+    console.log('Received params:', params)
 
     // Adiciona o client_secret aos parâmetros
     const fullParams = `${params}&client_secret=${Deno.env.get('ML_CLIENT_SECRET')}`
+    console.log('Making request to ML API with params:', fullParams)
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
@@ -26,9 +28,10 @@ serve(async (req) => {
     })
 
     const data = await response.json()
+    console.log('ML API Response:', data)
 
     if (!response.ok) {
-      console.error('Erro na resposta do ML:', data)
+      console.error('Error response from ML:', data)
       throw new Error(JSON.stringify(data))
     }
 
@@ -42,7 +45,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Erro na função:', error)
+    console.error('Error in function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
