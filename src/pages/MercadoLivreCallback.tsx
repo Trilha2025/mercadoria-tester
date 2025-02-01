@@ -44,8 +44,9 @@ const MercadoLivreCallback = () => {
         console.log('Buscando conexão do ML para o usuário:', user.id);
         const { data: connection, error: connectionError } = await supabase
           .from('mercadolivre_connections')
-          .select('code_verifier')
+          .select('*')
           .eq('user_id', user.id)
+          .eq('access_token', 'pending')
           .maybeSingle();
 
         if (connectionError) {
@@ -53,7 +54,12 @@ const MercadoLivreCallback = () => {
           throw new Error('Erro ao buscar conexão com Mercado Livre');
         }
 
-        if (!connection?.code_verifier) {
+        if (!connection) {
+          console.error('Nenhuma conexão pendente encontrada');
+          throw new Error('Nenhuma conexão pendente encontrada. Por favor, tente conectar novamente.');
+        }
+
+        if (!connection.code_verifier) {
           console.error('Code verifier não encontrado na conexão:', connection);
           throw new Error('Code verifier não encontrado. Por favor, tente conectar novamente.');
         }
