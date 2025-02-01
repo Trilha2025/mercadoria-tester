@@ -41,9 +41,9 @@ export const initializeAuth = async () => {
           refresh_token: 'pending',
           ml_user_id: 'pending'
         })
-        .eq('id', existingConnection.id)  // Changed from user_id to id for more precise update
+        .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error('[ML Auth] Erro ao atualizar conexão:', updateError);
@@ -63,7 +63,7 @@ export const initializeAuth = async () => {
           ml_user_id: 'pending'
         }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (insertError || !newConnection) {
         console.error('[ML Auth] Erro ao criar conexão:', insertError);
@@ -76,8 +76,8 @@ export const initializeAuth = async () => {
     const { data: verificationCheck } = await supabase
       .from('mercadolivre_connections')
       .select('code_verifier')
-      .eq('id', connection.id)
-      .single();
+      .eq('user_id', user.id)
+      .maybeSingle();
 
     if (!verificationCheck?.code_verifier) {
       console.error('[ML Auth] Code verifier não foi salvo corretamente');
@@ -85,9 +85,9 @@ export const initializeAuth = async () => {
     }
 
     console.log('[ML Auth] Conexão configurada com sucesso:', {
-      id: connection.id,
-      user_id: connection.user_id,
-      code_verifier_length: connection.code_verifier?.length
+      id: connection?.id,
+      user_id: connection?.user_id,
+      code_verifier_length: connection?.code_verifier?.length
     });
 
     const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
