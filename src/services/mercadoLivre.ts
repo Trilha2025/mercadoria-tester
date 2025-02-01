@@ -11,12 +11,11 @@ export const initializeAuth = async () => {
     console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
     const { verifier, challenge } = await generateCodeChallenge();
-    console.log('[ML Auth] Code verifier gerado:', { 
-      verifier: verifier.slice(0, 10) + '...', 
-      challenge: challenge.slice(0, 10) + '...' 
+    console.log('[ML Auth] Code verifier gerado:', {
+      verifier: verifier.slice(0, 10) + '...',
+      challenge: challenge.slice(0, 10) + '...'
     });
 
-    // Primeiro, verificar se já existe uma conexão para o usuário
     const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
       .select()
@@ -29,9 +28,8 @@ export const initializeAuth = async () => {
     }
 
     let connection;
-    
+
     if (existingConnection) {
-      // Atualizar conexão existente com novo code_verifier
       console.log('[ML Auth] Atualizando conexão existente:', existingConnection.id);
       const { data: updatedConnection, error: updateError } = await supabase
         .from('mercadolivre_connections')
@@ -48,16 +46,15 @@ export const initializeAuth = async () => {
       }
       connection = updatedConnection;
     } else {
-      // Criar nova conexão
       console.log('[ML Auth] Criando nova conexão para usuário:', user.id);
       const { data: newConnection, error: insertError } = await supabase
         .from('mercadolivre_connections')
         .insert([{
           user_id: user.id,
           code_verifier: verifier,
-          access_token: '',
-          refresh_token: '',
-          ml_user_id: '',
+          access_token: 'pending',
+          refresh_token: 'pending',
+          ml_user_id: 'pending',
         }])
         .select()
         .single();
@@ -69,7 +66,6 @@ export const initializeAuth = async () => {
       connection = newConnection;
     }
 
-    // Verificar se o code_verifier foi salvo corretamente
     const { data: verificationCheck } = await supabase
       .from('mercadolivre_connections')
       .select('code_verifier')
@@ -88,7 +84,7 @@ export const initializeAuth = async () => {
     });
 
     const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
-    
+
     console.log('[ML Auth] URL de autenticação gerada:', authUrl);
 
     return { authUrl };

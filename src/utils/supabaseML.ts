@@ -1,35 +1,32 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { MLConnection } from "@/types/mercadoLivre";
 
-interface MLConnectionData {
-  ml_user_id: string;
-  ml_nickname?: string;
-  ml_email?: string;
-  access_token: string;
-  refresh_token: string;
-}
-
-export const saveMLConnection = async (userData: MLConnectionData) => {
+export const saveMLConnection = async (userData: MLConnection): Promise<void> => {
   try {
-    const { data: existingConnection, error: fetchError } = await supabase
-      .from('mercadolivre_connections')
-      .select()
-      .maybeSingle();
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    console.log('Current user:', user.id);
-    console.log('Saving ML connection data:', userData);
+    console.log('Saving ML connection for user:', user.id);
 
     const connectionData = {
       ...userData,
       user_id: user.id,
     };
 
+    const { data: existingConnection, error: fetchError } = await supabase
+      .from('mercadolivre_connections')
+      .select()
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error checking existing connection:', fetchError);
+      throw fetchError;
+    }
+
     if (existingConnection) {
-      console.log('Updating existing connection');
       const { error } = await supabase
         .from('mercadolivre_connections')
         .update(connectionData)
@@ -40,7 +37,6 @@ export const saveMLConnection = async (userData: MLConnectionData) => {
         throw error;
       }
     } else {
-      console.log('Creating new connection');
       const { error } = await supabase
         .from('mercadolivre_connections')
         .insert([connectionData]);
@@ -78,7 +74,6 @@ export const getMLConnection = async () => {
       return null;
     }
 
-    console.log('ML connection data:', data);
     return data;
   } catch (error) {
     console.error('Error in getMLConnection:', error);
@@ -86,7 +81,7 @@ export const getMLConnection = async () => {
   }
 };
 
-export const deleteMLConnection = async () => {
+export const deleteMLConnection = async (): Promise<void> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

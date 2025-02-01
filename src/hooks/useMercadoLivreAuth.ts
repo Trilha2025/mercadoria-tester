@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import type { MLUser } from "@/types/mercadoLivre";
 
-export const useMercadoLivreAuth = () => {
+interface UseMercadoLivreAuthReturn {
+  isAuthenticated: boolean;
+  userData: MLUser | null;
+  checkConnection: () => Promise<void>;
+}
+
+export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  const { toast } = useToast();
+  const [userData, setUserData] = useState<MLUser | null>(null);
 
   useEffect(() => {
     checkConnection();
@@ -34,13 +39,24 @@ export const useMercadoLivreAuth = () => {
 
       if (connection?.access_token) {
         setIsAuthenticated(true);
-        const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
-          headers: {
-            'Authorization': `Bearer ${connection.access_token}`
+        try {
+          const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
+            headers: {
+              'Authorization': `Bearer ${connection.access_token}`
+            }
+          });
+          
+          if (!userResponse.ok) {
+            throw new Error('Failed to fetch user data');
           }
-        });
-        const userData = await userResponse.json();
-        setUserData(userData);
+          
+          const userData = await userResponse.json();
+          setUserData(userData);
+        } catch (error) {
+          console.error('Error fetching ML user data:', error);
+          setIsAuthenticated(false);
+          setUserData(null);
+        }
       }
     } catch (error) {
       console.error('Error checking connection:', error);
