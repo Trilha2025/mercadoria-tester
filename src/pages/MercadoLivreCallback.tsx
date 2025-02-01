@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { LogOut, Search, User } from "lucide-react";
+import { Loader, CheckCircle, XCircle, AlertCircle, LogOut, Search } from "lucide-react";
 
 const MercadoLivreCallback = () => {
   const navigate = useNavigate();
@@ -15,6 +15,8 @@ const MercadoLivreCallback = () => {
   const [mlbId, setMlbId] = useState('');
   const [visitCount, setVisitCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -25,12 +27,14 @@ const MercadoLivreCallback = () => {
 
       if (error || !code) {
         console.error('Erro na autenticação:', errorDescription);
+        setAuthStatus('error');
+        setAuthError(errorDescription || 'Ocorreu um erro durante a autenticação');
         toast({
           title: "Erro na autenticação",
           description: errorDescription || "Ocorreu um erro durante a autenticação",
           variant: "destructive",
         });
-        navigate('/');
+        setTimeout(() => navigate('/'), 3000);
         return;
       }
 
@@ -41,6 +45,10 @@ const MercadoLivreCallback = () => {
         }
 
         const tokenData = await exchangeCodeForToken(code, verifier);
+        if (!tokenData || !tokenData.access_token) {
+          throw new Error('Token de acesso não recebido');
+        }
+
         localStorage.setItem('ml_access_token', tokenData.access_token);
         localStorage.setItem('ml_refresh_token', tokenData.refresh_token);
         
@@ -50,8 +58,14 @@ const MercadoLivreCallback = () => {
             'Authorization': `Bearer ${tokenData.access_token}`
           }
         });
+
+        if (!userResponse.ok) {
+          throw new Error('Falha ao buscar dados do usuário');
+        }
+
         const userData = await userResponse.json();
         setUserData(userData);
+        setAuthStatus('success');
         
         toast({
           title: "Sucesso",
@@ -59,19 +73,19 @@ const MercadoLivreCallback = () => {
         });
       } catch (error) {
         console.error('Erro ao trocar código por token:', error);
+        setAuthStatus('error');
+        setAuthError(error instanceof Error ? error.message : 'Erro desconhecido');
         toast({
           title: "Erro",
           description: "Falha ao completar autenticação",
           variant: "destructive",
         });
-        navigate('/');
+        setTimeout(() => navigate('/'), 3000);
       }
     };
 
-    if (!userData) {
-      handleCallback();
-    }
-  }, [location, navigate, toast, userData]);
+    handleCallback();
+  }, [location, navigate, toast]);
 
   const handleLogout = () => {
     localStorage.removeItem('ml_access_token');
@@ -102,6 +116,11 @@ const MercadoLivreCallback = () => {
           'Authorization': `Bearer ${accessToken}`
         }
       });
+      
+      if (!response.ok) {
+        throw new Error('Falha ao buscar visitas');
+      }
+
       const data = await response.json();
       setVisitCount(data.total_visits || 0);
       toast({
@@ -120,12 +139,36 @@ const MercadoLivreCallback = () => {
     }
   };
 
+  if (authStatus === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader className="h-12 w-12 animate-spin mx-auto text-meli-yellow" />
+          <h2 className="text-2xl font-semibold">Processando autenticação...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (authStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h2 className="text-2xl font-semibold text-red-500">Erro na autenticação</h2>
+          <p className="text-gray-600">{authError}</p>
+          <p className="text-sm text-gray-500">Redirecionando para a página inicial...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!userData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-4">Processando autenticação...</h2>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+        <div className="text-center space-y-4">
+          <Loader className="h-12 w-12 animate-spin mx-auto text-meli-yellow" />
+          <h2 className="text-2xl font-semibold">Carregando dados do usuário...</h2>
         </div>
       </div>
     );
@@ -137,7 +180,7 @@ const MercadoLivreCallback = () => {
         <Card className="p-6">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-2">
-              <User className="h-6 w-6" />
+              <CheckCircle className="h-6 w-6 text-green-500" />
               <h2 className="text-2xl font-semibold">
                 {userData.nickname || userData.email}
               </h2>
@@ -167,7 +210,11 @@ const MercadoLivreCallback = () => {
                   disabled={loading}
                   className="flex items-center gap-2"
                 >
-                  <Search className="h-4 w-4" />
+                  {loading ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
                   {loading ? "Buscando..." : "Buscar Visitas"}
                 </Button>
               </div>
