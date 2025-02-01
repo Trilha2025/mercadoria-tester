@@ -14,7 +14,10 @@ const Index = () => {
     const fetchUserData = async () => {
       try {
         const accessToken = localStorage.getItem("ml_access_token");
+        console.log("Access Token present:", !!accessToken);
+        
         if (!accessToken) {
+          console.log("No access token found - user not connected");
           setAccountName(null);
           return;
         }
@@ -26,11 +29,22 @@ const Index = () => {
         });
 
         if (!response.ok) {
+          console.error("Error response from ML API:", response.status);
           throw new Error("Failed to fetch user data");
         }
 
         const userData = await response.json();
+        console.log("Connected account details:", {
+          nickname: userData.nickname,
+          id: userData.id,
+          email: userData.email
+        });
+        
         setAccountName(userData.nickname);
+        toast({
+          title: "Account Status",
+          description: `Connected as: ${userData.nickname}`,
+        });
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast({
@@ -100,29 +114,39 @@ const Index = () => {
         </h1>
 
         {/* Connected Account Display */}
-        <div className="bg-white rounded-lg shadow p-4 mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-gray-500" />
-            <span className="text-gray-600">Connected Account:</span>
-            <span className="font-semibold">
-              {accountName || "Not connected"}
-            </span>
+        <div className="bg-white rounded-lg shadow p-4 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-gray-500" />
+              <span className="text-gray-600">Connected Account:</span>
+              <span className="font-semibold">
+                {accountName || "Not connected"}
+              </span>
+            </div>
+            {accountName && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  localStorage.removeItem("ml_access_token");
+                  setAccountName(null);
+                  console.log("User disconnected - token removed");
+                  toast({
+                    title: "Disconnected",
+                    description: "Successfully disconnected from Mercado Livre",
+                  });
+                }}
+              >
+                Disconnect
+              </Button>
+            )}
           </div>
-          {accountName && (
-            <Button
-              variant="destructive"
-              onClick={() => {
-                localStorage.removeItem("ml_access_token");
-                setAccountName(null);
-                toast({
-                  title: "Disconnected",
-                  description: "Successfully disconnected from Mercado Livre",
-                });
-              }}
-            >
-              Disconnect
-            </Button>
-          )}
+          <div className="mt-2 text-sm text-gray-500">
+            {accountName ? (
+              <p>✅ Successfully connected to Mercado Livre account</p>
+            ) : (
+              <p>❌ No account connected. Please authenticate to use the API.</p>
+            )}
+          </div>
         </div>
 
         {/* MLB Visit Check Section */}
