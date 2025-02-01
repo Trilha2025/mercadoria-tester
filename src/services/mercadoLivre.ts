@@ -8,7 +8,7 @@ export const initializeAuth = async () => {
       throw new Error('User not authenticated');
     }
 
-    console.log('Iniciando processo de autenticação para usuário:', user.id);
+    console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
     // Primeiro, vamos limpar qualquer conexão pendente antiga
     const { error: deleteError } = await supabase
@@ -18,12 +18,12 @@ export const initializeAuth = async () => {
       .eq('access_token', 'pending');
 
     if (deleteError) {
-      console.error('Erro ao limpar conexões pendentes:', deleteError);
+      console.error('[ML Auth] Erro ao limpar conexões pendentes:', deleteError);
       throw new Error('Failed to clean pending connections');
     }
 
     const { verifier, challenge } = await generateCodeChallenge();
-    console.log('Code challenge gerado:', { 
+    console.log('[ML Auth] Code verifier gerado:', { 
       verifier: verifier.slice(0, 10) + '...', 
       challenge: challenge.slice(0, 10) + '...' 
     });
@@ -42,11 +42,15 @@ export const initializeAuth = async () => {
       .single();
 
     if (insertError || !newConnection) {
-      console.error('Erro ao criar conexão:', insertError);
+      console.error('[ML Auth] Erro ao criar conexão:', insertError);
       throw new Error('Failed to create connection');
     }
 
-    console.log('Conexão pendente criada com sucesso:', newConnection.id);
+    console.log('[ML Auth] Conexão pendente criada com sucesso:', {
+      id: newConnection.id,
+      user_id: newConnection.user_id,
+      code_verifier_length: newConnection.code_verifier?.length
+    });
 
     // Verificar se a conexão foi realmente criada
     const { data: verifyConnection, error: verifyError } = await supabase
@@ -57,17 +61,22 @@ export const initializeAuth = async () => {
       .single();
 
     if (verifyError || !verifyConnection) {
-      console.error('Erro ao verificar conexão:', verifyError);
+      console.error('[ML Auth] Erro ao verificar conexão:', verifyError);
       throw new Error('Failed to verify connection creation');
     }
 
-    console.log('Conexão verificada com sucesso. Redirecionando para ML...');
+    if (!verifyConnection.code_verifier) {
+      console.error('[ML Auth] Code verifier não foi salvo corretamente');
+      throw new Error('Code verifier not saved correctly');
+    }
+
+    console.log('[ML Auth] Conexão verificada com sucesso. Redirecionando para ML...');
 
     return {
       authUrl: `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`
     };
   } catch (error) {
-    console.error('Error in initializeAuth:', error);
+    console.error('[ML Auth] Error in initializeAuth:', error);
     throw error;
   }
 };
@@ -79,7 +88,7 @@ export const disconnectMercadoLivre = async () => {
       throw new Error('User not authenticated');
     }
 
-    console.log('Desconectando usuário do ML:', user.id);
+    console.log('[ML Auth] Desconectando usuário do ML:', user.id);
 
     const { error } = await supabase
       .from('mercadolivre_connections')
@@ -87,13 +96,13 @@ export const disconnectMercadoLivre = async () => {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Erro ao desconectar:', error);
+      console.error('[ML Auth] Erro ao desconectar:', error);
       throw error;
     }
 
-    console.log('Usuário desconectado com sucesso');
+    console.log('[ML Auth] Usuário desconectado com sucesso');
   } catch (error) {
-    console.error('Error disconnecting:', error);
+    console.error('[ML Auth] Error disconnecting:', error);
     throw error;
   }
 };
