@@ -35,7 +35,6 @@ const MercadoLivreCallback = () => {
       }
 
       try {
-        // Get user and code_verifier
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           throw new Error('User not authenticated');

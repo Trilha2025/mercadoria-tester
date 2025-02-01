@@ -1,6 +1,10 @@
 export const generateCodeChallenge = async () => {
   const verifier = generateRandomString();
   const challenge = await generateChallenge(verifier);
+  console.log('Gerando novo code challenge:', {
+    verifier: verifier.slice(0, 10) + '...',
+    challenge: challenge.slice(0, 10) + '...'
+  });
   return { verifier, challenge };
 };
 
@@ -25,7 +29,10 @@ const base64URLEncode = (buffer: Uint8Array) => {
 };
 
 export const exchangeCodeForToken = async (code: string, codeVerifier: string) => {
-  console.log('Trocando código por token...', { code, codeVerifier: codeVerifier.slice(0, 10) + '...' });
+  console.log('Trocando código por token...', { 
+    code, 
+    codeVerifier: codeVerifier.slice(0, 10) + '...' 
+  });
   
   const params = new URLSearchParams();
   params.append('grant_type', 'authorization_code');
