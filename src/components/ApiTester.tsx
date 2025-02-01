@@ -1,15 +1,16 @@
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { disconnectMercadoLivre } from '@/services/mercadoLivre';
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import MLEndpointTester from './mercadolivre/MLEndpointTester';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
+import { useCallback } from 'react';
 
 const ApiTester = () => {
-  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
   const { toast } = useToast();
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await disconnectMercadoLivre();
       await checkConnection();
@@ -25,7 +26,7 @@ const ApiTester = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [checkConnection, toast]);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">

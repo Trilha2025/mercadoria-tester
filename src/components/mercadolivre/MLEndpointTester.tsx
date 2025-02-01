@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { getMLConnection } from '@/utils/supabaseML';
 
 const MLEndpointTester = () => {
@@ -10,7 +10,7 @@ const MLEndpointTester = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleTest = async () => {
+  const handleTest = useCallback(async () => {
     if (!endpoint) {
       toast({
         title: "Erro",
@@ -39,16 +39,16 @@ const MLEndpointTester = () => {
         description: "Chamada à API completada com sucesso",
       });
     } catch (error) {
+      console.error('Erro na API:', error);
       toast({
         title: "Erro",
         description: "Falha ao buscar dados da API",
         variant: "destructive",
       });
-      console.error('Erro na API:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint, toast]);
 
   return (
     <>
