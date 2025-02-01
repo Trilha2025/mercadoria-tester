@@ -50,29 +50,29 @@ const MercadoLivreCallback = () => {
         }
 
         // Buscar sessão do usuário
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          // throw new Error('Erro ao obter sessão');
-          console.log('Erro ao obter sessão:', error);
-        }
-        const user = session?.user;
+        // const { data: { session }, error } = await supabase.auth.getSession();
+        // if (error) {
+        //   // throw new Error('Erro ao obter sessão');
+        //   console.log('Erro ao obter sessão:', error);
+        // }
+        // const user = session?.user;
 
-        console.log('Buscando conexão do ML para o usuário:', user.id);
-        const { data: connection, error: connectionError } = await supabase
-          .from('mercadolivre_connections')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        // console.log('Buscando conexão do ML para o usuário:', user.id);
+        // const { data: connection, error: connectionError } = await supabase
+        //   .from('mercadolivre_connections')
+        //   .select('*')
+        //   .eq('user_id', user.id)
+        //   .single();
 
-        if (connectionError) {
-          console.error('Erro ao buscar conexão:', connectionError);
-          throw new Error('Erro ao buscar conexão com Mercado Livre');
-        }
+        // if (connectionError) {
+        //   console.error('Erro ao buscar conexão:', connectionError);
+        //   throw new Error('Erro ao buscar conexão com Mercado Livre');
+        // }
 
-        if (!connection) {
-          console.error('Nenhuma conexão encontrada');
-          throw new Error('Nenhuma conexão encontrada. Por favor, tente conectar novamente.');
-        }
+        // if (!connection) {
+        //   console.error('Nenhuma conexão encontrada');
+        //   throw new Error('Nenhuma conexão encontrada. Por favor, tente conectar novamente.');
+        // }
 
         
         // Validar token fazendo uma requisição de teste
