@@ -81,20 +81,37 @@ const ApiTester = () => {
     try {
       const { verifier, challenge } = await generateCodeChallenge();
       
-      // Save code_verifier to Supabase
+      // Save code_verifier to temporary table
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
-      await supabase
+      // First, check if there's an existing connection
+      const { data: existingConnection } = await supabase
         .from('mercadolivre_connections')
-        .upsert({
-          user_id: user.id,
-          code_verifier: verifier
-        }, {
-          onConflict: 'user_id'
-        });
+        .select()
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingConnection) {
+        // Update existing connection
+        await supabase
+          .from('mercadolivre_connections')
+          .update({ code_verifier: verifier })
+          .eq('user_id', user.id);
+      } else {
+        // Create a minimal record with temporary data
+        await supabase
+          .from('mercadolivre_connections')
+          .insert([{
+            user_id: user.id,
+            code_verifier: verifier,
+            access_token: 'temporary',
+            refresh_token: 'temporary',
+            ml_user_id: 'temporary'
+          }]);
+      }
       
       const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
       
