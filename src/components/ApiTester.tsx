@@ -1,42 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { deleteMLConnection, getMLConnection } from '@/utils/supabaseML';
 import { useToast } from "@/components/ui/use-toast";
+import { disconnectMercadoLivre } from '@/services/mercadoLivre';
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import MLEndpointTester from './mercadolivre/MLEndpointTester';
+import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
 
 const ApiTester = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    checkConnection();
-  }, []);
-
-  const checkConnection = async () => {
-    try {
-      const connection = await getMLConnection();
-      if (connection) {
-        setIsAuthenticated(true);
-        const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
-          headers: {
-            'Authorization': `Bearer ${connection.access_token}`
-          }
-        });
-        const userData = await userResponse.json();
-        setUserData(userData);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar conexão:', error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
-      await deleteMLConnection();
-      setIsAuthenticated(false);
-      setUserData(null);
+      await disconnectMercadoLivre();
+      await checkConnection();
       toast({
         title: "Sucesso",
         description: "Desconectado com sucesso",
