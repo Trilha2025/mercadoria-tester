@@ -93,12 +93,22 @@ const ConnectionStatus = () => {
       {userData ? (
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-green-800">
-              Conectado como: <span className="font-semibold">{userData.nickname}</span>
+            <p className="text-green-800 font-medium">
+              Conta Conectada
             </p>
-            <p className="text-sm text-green-600 mt-1">
-              ID: {userData.id}
-            </p>
+            <div className="mt-2 space-y-1">
+              <p className="text-green-700">
+                Nome: <span className="font-semibold">{userData.nickname}</span>
+              </p>
+              <p className="text-sm text-green-600">
+                ID da conta: {userData.id}
+              </p>
+              {userData.email && (
+                <p className="text-sm text-green-600">
+                  Email: {userData.email}
+                </p>
+              )}
+            </div>
           </div>
           <Button
             onClick={handleLogout}
@@ -113,6 +123,9 @@ const ConnectionStatus = () => {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-yellow-800">
             Nenhuma conta conectada
+          </p>
+          <p className="text-sm text-yellow-600 mt-1">
+            Conecte sua conta do Mercado Livre para começar
           </p>
         </div>
       )}
