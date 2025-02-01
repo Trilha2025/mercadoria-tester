@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export const generateCodeChallenge = async () => {
   const verifier = generateRandomString();
   const challenge = await generateChallenge(verifier);
