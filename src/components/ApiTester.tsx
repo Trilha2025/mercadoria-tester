@@ -81,7 +81,7 @@ const ApiTester = () => {
       const { verifier, challenge } = await generateCodeChallenge();
       localStorage.setItem('code_verifier', verifier);
       
-      const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=https://atrilhadoecommerce.vercel.app/ml-callback&code_challenge_method=S256&code_challenge=${challenge}`;
+      const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
       
       window.location.href = authUrl;
     } catch (error) {
