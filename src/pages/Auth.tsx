@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { LogIn, UserPlus } from "lucide-react";
 
 const Auth = () => {
@@ -24,8 +24,13 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
         });
+        
         if (error) throw error;
+        
         toast({
           title: "Registro realizado com sucesso!",
           description: "Verifique seu email para confirmar o cadastro.",
@@ -35,14 +40,21 @@ const Auth = () => {
           email,
           password,
         });
-        if (error) throw error;
+        
+        if (error) {
+          if (error.message === "Invalid login credentials") {
+            throw new Error("Email ou senha inválidos");
+          }
+          throw error;
+        }
+        
         navigate("/");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message,
+        description: error.message || "Ocorreu um erro durante a autenticação",
       });
     } finally {
       setLoading(false);
@@ -80,6 +92,7 @@ const Auth = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           <Button
