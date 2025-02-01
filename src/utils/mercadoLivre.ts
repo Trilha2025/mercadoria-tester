@@ -42,6 +42,7 @@ export const exchangeCodeForToken = async (code: string, codeVerifier: string): 
       params: new URLSearchParams({
         grant_type: 'authorization_code',
         client_id: import.meta.env.VITE_ML_CLIENT_ID,
+        client_secret: import.meta.env.ML_CLIENT_SECRET,
         code,
         redirect_uri: import.meta.env.VITE_ML_REDIRECT_URI,
         code_verifier: codeVerifier

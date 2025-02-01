@@ -22,6 +22,9 @@ const MercadoLivreCallback = () => {
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
+      console.log('Código de autenticação:', code);
+      console.log('Erro de autenticação:', error, errorDescription);
+
       if (error || !code) {
         console.error('Erro de autenticação:', errorDescription);
         setStatus('error');
@@ -35,10 +38,23 @@ const MercadoLivreCallback = () => {
       }
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error('User not authenticated');
+
+        console.log('Iniciando troca de código por token...');
+        const codeVerifier = localStorage.getItem('code_verifier');
+        const tokenData = await exchangeCodeForToken(code, codeVerifier);
+        console.log('Resposta da troca de token:', tokenData);
+        
+        if (!tokenData || !tokenData.access_token) {
+          throw new Error('Token de acesso não recebido');
         }
+
+        // Buscar sessão do usuário
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          // throw new Error('Erro ao obter sessão');
+          console.log('Erro ao obter sessão:', error);
+        }
+        const user = session?.user;
 
         console.log('Buscando conexão do ML para o usuário:', user.id);
         const { data: connection, error: connectionError } = await supabase
@@ -57,14 +73,7 @@ const MercadoLivreCallback = () => {
           throw new Error('Nenhuma conexão encontrada. Por favor, tente conectar novamente.');
         }
 
-        console.log('Iniciando troca de código por token...');
-        const tokenData = await exchangeCodeForToken(code, connection.code_verifier);
-        console.log('Resposta da troca de token:', tokenData);
         
-        if (!tokenData || !tokenData.access_token) {
-          throw new Error('Token de acesso não recebido');
-        }
-
         // Validar token fazendo uma requisição de teste
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
