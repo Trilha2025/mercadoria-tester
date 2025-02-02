@@ -5,6 +5,8 @@ import MLAuthButton from '@/components/mercadolivre/MLAuthButton';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { ApiSidebar } from "@/components/api/ApiSidebar";
 
 const ApiTesterPage = () => {
   const { storeId } = useParams();
@@ -30,27 +32,26 @@ const ApiTesterPage = () => {
   }, [storeId]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container max-w-4xl mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Mercado Livre API Tester
-        </h1>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gray-50">
+        <ApiSidebar storeName={storeName} />
+        <main className="flex-1 p-8">
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-4">Testando API para: {storeName}</h2>
+            
+            <div className="mb-6">
+              <MLAuthButton 
+                isAuthenticated={isAuthenticated}
+                onLogout={checkConnection}
+                userData={userData}
+              />
+            </div>
 
-        <Card className="p-6">
-          <h2 className="text-2xl font-bold mb-4">Testando API para: {storeName}</h2>
-          
-          <div className="mb-6">
-            <MLAuthButton 
-              isAuthenticated={isAuthenticated}
-              onLogout={checkConnection}
-              userData={userData}
-            />
-          </div>
-
-          <MLEndpointTester />
-        </Card>
+            <MLEndpointTester />
+          </Card>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
