@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Store, CheckCircle2, Loader2 } from "lucide-react";
+import { Store, CheckCircle2, Loader2, TestTube2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface ManagedStore {
   id: string;
@@ -22,6 +23,7 @@ const StoreManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
+  const navigate = useNavigate();
 
   const fetchStores = async () => {
     try {
@@ -52,75 +54,13 @@ const StoreManager = () => {
     }
   };
 
-  const addStore = async () => {
-    if (!userData) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Usuário não autenticado",
-      });
-      return;
-    }
-
-    try {
-      // Get current user from Supabase
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      const { data: existingConnection } = await supabase
-        .from('mercadolivre_connections')
-        .select('id')
-        .eq('ml_user_id', userData.id)
-        .single();
-
-      if (!existingConnection) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Conexão com o Mercado Livre não encontrada",
-        });
-        return;
-      }
-
-      const storeName = `Loja ${userData.nickname || userData.email}`;
-      
-      const { error } = await supabase
-        .from('managed_stores')
-        .insert({
-          store_name: storeName,
-          ml_connection_id: existingConnection.id,
-          user_id: user.id, // Add the user_id field
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Loja adicionada com sucesso",
-      });
-
-      fetchStores();
-    } catch (error) {
-      console.error('Error adding store:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível adicionar a loja",
-      });
-    }
-  };
-
   const setActiveStore = async (storeId: string) => {
     try {
-      // Desativa todas as lojas primeiro
       await supabase
         .from('managed_stores')
         .update({ is_active: false })
         .neq('id', storeId);
 
-      // Ativa a loja selecionada
       const { error } = await supabase
         .from('managed_stores')
         .update({ is_active: true })
@@ -165,15 +105,6 @@ const StoreManager = () => {
           <Store className="h-6 w-6" />
           Gerenciamento de Lojas
         </h2>
-        {isAuthenticated && (
-          <Button
-            onClick={addStore}
-            className="bg-meli-yellow hover:bg-meli-yellow/90 text-black"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Loja
-          </Button>
-        )}
       </div>
 
       {!isAuthenticated ? (
@@ -194,7 +125,7 @@ const StoreManager = () => {
         <div className="text-center py-8">
           <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            Nenhuma loja conectada. Clique em "Adicionar Loja" para começar.
+            Nenhuma loja conectada.
           </p>
         </div>
       ) : (
@@ -211,6 +142,14 @@ const StoreManager = () => {
                 </p>
               </div>
               <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/api-tester/${store.id}`)}
+                  className="flex items-center gap-2"
+                >
+                  <TestTube2 className="h-4 w-4" />
+                  API Tester
+                </Button>
                 {store.is_active ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle2 className="h-5 w-5" />
