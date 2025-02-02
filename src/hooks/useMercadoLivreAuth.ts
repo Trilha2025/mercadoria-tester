@@ -49,6 +49,7 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
       }
 
       try {
+        console.log('Fetching ML user data with token:', connection.access_token);
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
             'Authorization': `Bearer ${connection.access_token}`
@@ -70,6 +71,7 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
         }
         
         const userData = await userResponse.json();
+        console.log('ML user data:', userData);
         setIsAuthenticated(true);
         setUserData(userData);
       } catch (error) {
