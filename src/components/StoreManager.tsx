@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Store, Building2, CheckCircle2, Loader2, TestTube2, Plus } from "lucide-react";
+import { Store, Building2, CheckCircle2, Loader2, TestTube2, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
@@ -111,6 +111,11 @@ const StoreManager = () => {
     }
   };
 
+  const handleManageCompany = (companyId: string) => {
+    // Navigate to company management page when implemented
+    console.log('Managing company:', companyId);
+  };
+
   useEffect(() => {
     fetchStores();
     fetchCompanies();
@@ -196,6 +201,14 @@ const StoreManager = () => {
                       {company.is_active ? 'Ativa' : 'Inativa'}
                     </p>
                   </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleManageCompany(company.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Gerenciar
+                  </Button>
                 </div>
               ))}
               {companies.length === 0 && !showCompanyForm && (
