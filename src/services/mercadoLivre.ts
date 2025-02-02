@@ -80,7 +80,7 @@ export const initializeAuth = async (companyId: string) => {
       code_verifier_length: connection?.code_verifier?.length
     });
 
-    const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}&state=${companyId}`;
+    const authUrl = `https://auth.mercadolibre.com/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}&state=${companyId}`;
 
     console.log('[ML Auth] URL de autenticação gerada:', authUrl);
 
