@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { User, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ConnectionStatus = () => {
   const [userData, setUserData] = useState<any>(null);
@@ -14,20 +15,31 @@ const ConnectionStatus = () => {
 
   const checkConnection = async () => {
     setIsLoading(true);
-    const accessToken = localStorage.getItem('ml_access_token');
-    console.log("Checking connection status - Token present:", !!accessToken);
-    
-    if (!accessToken) {
-      console.log("No access token found");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      console.log("Fetching user data with token:", accessToken);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("No authenticated user");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Checking ML connection for user:", user.id);
+      const { data: connection, error: connectionError } = await supabase
+        .from('mercadolivre_connections')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .single();
+
+      if (connectionError || !connection?.access_token) {
+        console.log("No valid ML connection found");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Fetching user data with token");
       const response = await fetch('https://api.mercadolibre.com/users/me', {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${connection.access_token}`
         }
       });
 
@@ -45,28 +57,50 @@ const ConnectionStatus = () => {
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
-      localStorage.removeItem('ml_access_token');
-      localStorage.removeItem('ml_refresh_token');
       setUserData(null);
       toast({
         variant: "destructive",
         title: "Erro de conexão",
         description: "Não foi possível verificar sua conexão com o Mercado Livre",
       });
+
+      // If we get a 401, clear the invalid connection
+      if (error instanceof Error && error.message.includes('401')) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('mercadolivre_connections')
+            .delete()
+            .eq('user_id', user.id);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('ml_access_token');
-    localStorage.removeItem('ml_refresh_token');
-    localStorage.removeItem('code_verifier');
-    setUserData(null);
-    toast({
-      title: "Desconectado",
-      description: "Sua conta foi desconectada com sucesso",
-    });
+  const handleLogout = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('mercadolivre_connections')
+          .delete()
+          .eq('user_id', user.id);
+      }
+      setUserData(null);
+      toast({
+        title: "Desconectado",
+        description: "Sua conta foi desconectada com sucesso",
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível desconectar sua conta",
+      });
+    }
   };
 
   if (isLoading) {
