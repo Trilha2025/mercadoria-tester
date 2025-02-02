@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateCodeChallenge } from '@/utils/mercadoLivre';
 
-export const initializeAuth = async () => {
+export const initializeAuth = async (companyId: string) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -11,15 +11,11 @@ export const initializeAuth = async () => {
     console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
     const { verifier, challenge } = await generateCodeChallenge();
-    // console.log('[ML Auth] Code verifier gerado:', {
-    //   verifier: verifier.slice(0, 10) + '...',
-    //   challenge: challenge.slice(0, 10) + '...'
-    // });
 
     const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
       .select()
-      .eq('user_id', user.id)
+      .eq('company_id', companyId)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -36,7 +32,7 @@ export const initializeAuth = async () => {
         .update({
           code_verifier: verifier,
         })
-        .eq('user_id', user.id)
+        .eq('company_id', companyId)
         .select()
         .single();
 
@@ -46,11 +42,12 @@ export const initializeAuth = async () => {
       }
       connection = updatedConnection;
     } else {
-      console.log('[ML Auth] Criando nova conexão para usuário:', user.id);
+      console.log('[ML Auth] Criando nova conexão para empresa:', companyId);
       const { data: newConnection, error: insertError } = await supabase
         .from('mercadolivre_connections')
         .insert([{
           user_id: user.id,
+          company_id: companyId,
           code_verifier: verifier,
           access_token: 'pending',
           refresh_token: 'pending',
@@ -69,7 +66,7 @@ export const initializeAuth = async () => {
     const { data: verificationCheck } = await supabase
       .from('mercadolivre_connections')
       .select('code_verifier')
-      .eq('user_id', user.id)
+      .eq('company_id', companyId)
       .single();
 
     if (!verificationCheck?.code_verifier) {
@@ -79,11 +76,11 @@ export const initializeAuth = async () => {
 
     console.log('[ML Auth] Conexão configurada com sucesso:', {
       id: connection?.id,
-      user_id: connection?.user_id,
+      company_id: connection?.company_id,
       code_verifier_length: connection?.code_verifier?.length
     });
 
-    const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}`;
+    const authUrl = `https://auth.mercadolibre.com.br/authorization?response_type=code&client_id=${import.meta.env.VITE_ML_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_ML_REDIRECT_URI}&code_challenge_method=S256&code_challenge=${challenge}&state=${companyId}`;
 
     console.log('[ML Auth] URL de autenticação gerada:', authUrl);
 
@@ -94,26 +91,26 @@ export const initializeAuth = async () => {
   }
 };
 
-export const disconnectMercadoLivre = async () => {
+export const disconnectMercadoLivre = async (companyId: string) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    console.log('[ML Auth] Desconectando usuário do ML:', user.id);
+    console.log('[ML Auth] Desconectando empresa do ML:', companyId);
 
     const { error } = await supabase
       .from('mercadolivre_connections')
       .delete()
-      .eq('user_id', user.id);
+      .eq('company_id', companyId);
 
     if (error) {
       console.error('[ML Auth] Erro ao desconectar:', error);
       throw error;
     }
 
-    console.log('[ML Auth] Usuário desconectado com sucesso');
+    console.log('[ML Auth] Empresa desconectada com sucesso');
   } catch (error) {
     console.error('[ML Auth] Error disconnecting:', error);
     throw error;

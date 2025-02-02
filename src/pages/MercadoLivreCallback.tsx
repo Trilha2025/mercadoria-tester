@@ -21,11 +21,13 @@ const MercadoLivreCallback = () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
+      const companyId = searchParams.get('state'); // Get company ID from state parameter
 
       console.log('Código de autenticação:', code);
       console.log('Erro de autenticação:', error, errorDescription);
+      console.log('Company ID:', companyId);
 
-      if (error || !code) {
+      if (error || !code || !companyId) {
         console.error('Erro de autenticação:', errorDescription);
         setStatus('error');
         setErrorMessage(errorDescription || 'Ocorreu um erro durante a autenticação');
@@ -38,7 +40,6 @@ const MercadoLivreCallback = () => {
       }
 
       try {
-
         console.log('Iniciando troca de código por token...');
         const codeVerifier = localStorage.getItem('code_verifier');
         console.log('Código de Verificação:', codeVerifier);
@@ -49,32 +50,6 @@ const MercadoLivreCallback = () => {
           throw new Error('Token de acesso não recebido');
         }
 
-        // Buscar sessão do usuário
-        // const { data: { session }, error } = await supabase.auth.getSession();
-        // if (error) {
-        //   // throw new Error('Erro ao obter sessão');
-        //   console.log('Erro ao obter sessão:', error);
-        // }
-        // const user = session?.user;
-
-        // console.log('Buscando conexão do ML para o usuário:', user.id);
-        // const { data: connection, error: connectionError } = await supabase
-        //   .from('mercadolivre_connections')
-        //   .select('*')
-        //   .eq('user_id', user.id)
-        //   .single();
-
-        // if (connectionError) {
-        //   console.error('Erro ao buscar conexão:', connectionError);
-        //   throw new Error('Erro ao buscar conexão com Mercado Livre');
-        // }
-
-        // if (!connection) {
-        //   console.error('Nenhuma conexão encontrada');
-        //   throw new Error('Nenhuma conexão encontrada. Por favor, tente conectar novamente.');
-        // }
-
-        
         // Validar token fazendo uma requisição de teste
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
@@ -90,14 +65,14 @@ const MercadoLivreCallback = () => {
         const userData = await userResponse.json();
         console.log('Dados do usuário recebidos:', userData);
         
-        // Salvar dados no Supabase
+        // Salvar dados no Supabase com o company_id
         await saveMLConnection({
           ml_user_id: userData.id,
           ml_nickname: userData.nickname,
           ml_email: userData.email,
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
-        });
+        }, companyId);
 
         console.log('Conexão salva com sucesso');
         
@@ -109,7 +84,7 @@ const MercadoLivreCallback = () => {
 
         // Aguardar 3 segundos antes de redirecionar
         setTimeout(() => {
-          navigate('/');
+          navigate(`/company/${companyId}`);
         }, 3000);
       } catch (error) {
         console.error('Erro detalhado durante autenticação:', error);
@@ -141,7 +116,7 @@ const MercadoLivreCallback = () => {
           <div className="text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
             <h2 className="text-2xl font-semibold text-green-600">Conectado com Sucesso!</h2>
-            <p className="text-gray-600">Redirecionando para a página inicial...</p>
+            <p className="text-gray-600">Redirecionando para a página da empresa...</p>
           </div>
         )}
 

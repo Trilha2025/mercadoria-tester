@@ -8,15 +8,24 @@ interface UseMercadoLivreAuthReturn {
   checkConnection: () => Promise<void>;
 }
 
-export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
+export const useMercadoLivreAuth = (companyId?: string): UseMercadoLivreAuthReturn => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<MLUser | null>(null);
 
   useEffect(() => {
-    checkConnection();
-  }, []);
+    if (companyId) {
+      checkConnection();
+    }
+  }, [companyId]);
 
   const checkConnection = async () => {
+    if (!companyId) {
+      console.log('No company ID provided');
+      setIsAuthenticated(false);
+      setUserData(null);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -26,11 +35,11 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
         return;
       }
 
-      console.log('Checking ML connection for user:', user.id);
+      console.log('Checking ML connection for company:', companyId);
       const { data: connection, error } = await supabase
         .from('mercadolivre_connections')
         .select()
-        .eq('user_id', user.id)
+        .eq('company_id', companyId)
         .neq('access_token', 'pending')
         .maybeSingle();
 
@@ -73,7 +82,7 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
           await supabase
             .from('mercadolivre_connections')
             .delete()
-            .eq('user_id', user.id);
+            .eq('company_id', companyId);
         }
       }
     } catch (error) {

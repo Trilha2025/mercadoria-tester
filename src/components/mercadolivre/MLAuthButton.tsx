@@ -6,14 +6,15 @@ interface MLAuthButtonProps {
   isAuthenticated: boolean;
   onLogout: () => Promise<void>;
   userData: any;
+  companyId: string;
 }
 
-const MLAuthButton = ({ isAuthenticated, onLogout, userData }: MLAuthButtonProps) => {
+const MLAuthButton = ({ isAuthenticated, onLogout, userData, companyId }: MLAuthButtonProps) => {
   const { toast } = useToast();
 
   const handleAuth = async () => {
     try {
-      const { authUrl } = await initializeAuth();
+      const { authUrl } = await initializeAuth(companyId);
       window.location.href = authUrl;
     } catch (error) {
       console.error('Error in authentication:', error);

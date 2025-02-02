@@ -20,7 +20,7 @@ const CompanyManagementPage = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth(companyId);
 
   useEffect(() => {
     fetchCompany();
@@ -108,6 +108,7 @@ const CompanyManagementPage = () => {
                   await checkConnection();
                 }}
                 userData={userData}
+                companyId={company.id}
               />
             </div>
           </div>
