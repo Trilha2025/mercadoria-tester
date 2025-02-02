@@ -31,8 +31,7 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
         .from('mercadolivre_connections')
         .select()
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .neq('access_token', 'pending')
         .maybeSingle();
 
       if (error) {
@@ -49,7 +48,6 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
       }
 
       try {
-        console.log('Fetching ML user data with token:', connection.access_token);
         const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
           headers: {
             'Authorization': `Bearer ${connection.access_token}`
@@ -58,26 +56,25 @@ export const useMercadoLivreAuth = (): UseMercadoLivreAuthReturn => {
         
         if (!userResponse.ok) {
           console.error('Error response from ML API:', await userResponse.text());
-          
-          // Se o token estiver inválido, limpar a conexão
-          if (userResponse.status === 401) {
-            await supabase
-              .from('mercadolivre_connections')
-              .delete()
-              .eq('id', connection.id);
-          }
-          
           throw new Error('Failed to fetch user data');
         }
         
         const userData = await userResponse.json();
-        console.log('ML user data:', userData);
         setIsAuthenticated(true);
         setUserData(userData);
       } catch (error) {
         console.error('Error fetching ML user data:', error);
         setIsAuthenticated(false);
         setUserData(null);
+        
+        // If we get a 401, the token is invalid or expired
+        if (error instanceof Error && error.message.includes('401')) {
+          // Clear the invalid connection
+          await supabase
+            .from('mercadolivre_connections')
+            .delete()
+            .eq('user_id', user.id);
+        }
       }
     } catch (error) {
       console.error('Error checking connection:', error);

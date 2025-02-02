@@ -88,7 +88,6 @@ export type Database = {
         Row: {
           access_token: string
           code_verifier: string | null
-          company_id: string | null
           created_at: string | null
           id: string
           ml_email: string | null
@@ -101,7 +100,6 @@ export type Database = {
         Insert: {
           access_token: string
           code_verifier?: string | null
-          company_id?: string | null
           created_at?: string | null
           id?: string
           ml_email?: string | null
@@ -114,7 +112,6 @@ export type Database = {
         Update: {
           access_token?: string
           code_verifier?: string | null
-          company_id?: string | null
           created_at?: string | null
           id?: string
           ml_email?: string | null
@@ -124,15 +121,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "mercadolivre_connections_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
