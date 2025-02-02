@@ -17,3 +17,10 @@ export interface MLConnection {
   access_token: string;
   refresh_token: string;
 }
+
+export interface Company {
+  id: string;
+  company_name: string;
+  is_active: boolean;
+  ml_connection?: MLConnection | null;
+}

@@ -6,15 +6,7 @@ import { Building2, Loader2, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import CompanyForm from './CompanyForm';
-
-interface Company {
-  id: string;
-  company_name: string;
-  is_active: boolean;
-  ml_connection?: {
-    id: string;
-  } | null;
-}
+import type { Company } from '@/types/mercadoLivre';
 
 const StoreManager = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -34,7 +26,15 @@ const StoreManager = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCompanies(data || []);
+
+      const formattedCompanies: Company[] = (data || []).map(company => ({
+        id: company.id,
+        company_name: company.company_name,
+        is_active: company.is_active,
+        ml_connection: company.ml_connection?.[0] || null
+      }));
+
+      setCompanies(formattedCompanies);
     } catch (error) {
       console.error('Error fetching companies:', error);
       toast({
@@ -99,7 +99,7 @@ const StoreManager = () => {
               <div className="space-y-1">
                 <h4 className="font-medium">{company.company_name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {company.ml_connection?.id ? 'Ativa' : 'Inativa'}
+                  {company.ml_connection ? 'Ativa' : 'Inativa'}
                 </p>
               </div>
               <Button

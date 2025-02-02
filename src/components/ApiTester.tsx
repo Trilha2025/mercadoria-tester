@@ -8,13 +8,15 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 
 const ApiTester = () => {
-  const { storeId } = useParams();
+  const { storeId } = useParams<{ storeId: string }>();
   const { toast } = useToast();
-  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth(storeId);
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth(storeId || '');
 
   const handleLogout = useCallback(async () => {
+    if (!storeId) return;
+    
     try {
-      await disconnectMercadoLivre();
+      await disconnectMercadoLivre(storeId);
       await checkConnection();
       toast({
         title: "Sucesso",
@@ -28,7 +30,11 @@ const ApiTester = () => {
         variant: "destructive",
       });
     }
-  }, [checkConnection, toast]);
+  }, [checkConnection, toast, storeId]);
+
+  if (!storeId) {
+    return null;
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
@@ -40,11 +46,11 @@ const ApiTester = () => {
             isAuthenticated={isAuthenticated}
             onLogout={handleLogout}
             userData={userData}
-            companyId={storeId || ''}
+            companyId={storeId}
           />
         </div>
 
-        <MLEndpointTester storeId={storeId || ''} />
+        <MLEndpointTester storeId={storeId} />
       </Card>
     </div>
   );
