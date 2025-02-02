@@ -6,7 +6,8 @@ import { disconnectMercadoLivre } from '@/services/mercadoLivre';
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
 import { useCallback, useState } from 'react';
-import { Link, TestTube2 } from "lucide-react";
+import { TestTube2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ApiTester = () => {
   const { toast } = useToast();
@@ -21,14 +22,14 @@ const ApiTester = () => {
       await checkConnection();
       toast({
         title: "Sucesso",
-        description: "Desconectado com sucesso",
+        description: "Desconectado do Mercado Livre",
       });
     } catch (error) {
-      console.error('Erro ao desconectar:', error);
+      console.error('Error logging out:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao desconectar",
         variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível desconectar",
       });
     }
   }, [checkConnection, toast]);
@@ -45,16 +46,27 @@ const ApiTester = () => {
 
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem('ml_access_token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
+      const { data: connection, error } = await supabase
+        .from('mercadolivre_connections')
+        .select('access_token')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !connection) {
+        throw new Error('No valid ML connection found');
       }
 
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${connection.access_token}`
+      };
+
       const res = await fetch(endpoint, { headers });
+      if (!res.ok) {
+        throw new Error(`API request failed with status ${res.status}`);
+      }
+      
       const data = await res.json();
       setResponse(data);
       toast({
@@ -76,7 +88,7 @@ const ApiTester = () => {
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4">Mercado Livre API Tester</h2>
+        <h2 className="text-2xl font-bold mb-6">Testar API do Mercado Livre</h2>
         
         <div className="mb-6">
           <MLAuthButton 

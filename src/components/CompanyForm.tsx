@@ -29,9 +29,18 @@ const CompanyForm = ({ onClose, onSuccess }: CompanyFormProps) => {
 
     setIsSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('companies')
-        .insert([{ company_name: companyName.trim() }]);
+        .insert({
+          company_name: companyName.trim(),
+          user_id: user.id
+        });
 
       if (error) throw error;
 
