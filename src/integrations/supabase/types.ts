@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      managed_stores: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          ml_connection_id: string
+          store_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          ml_connection_id: string
+          store_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          ml_connection_id?: string
+          store_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "managed_stores_ml_connection_id_fkey"
+            columns: ["ml_connection_id"]
+            isOneToOne: false
+            referencedRelation: "mercadolivre_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mercadolivre_connections: {
         Row: {
           access_token: string

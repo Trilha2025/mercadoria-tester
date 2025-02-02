@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ConnectionStatus from "@/components/ConnectionStatus";
 import MLBVisitChecker from "@/components/MLBVisitChecker";
 import ApiTester from "@/components/ApiTester";
+import StoreManager from "@/components/StoreManager";
 
 const Index = () => {
   const { toast } = useToast();
@@ -27,7 +28,11 @@ const Index = () => {
           Mercado Livre API Testing Environment
         </h1>
 
-        <ConnectionStatus />
+        <StoreManager />
+        
+        <div className="mt-8">
+          <ConnectionStatus />
+        </div>
         
         <MLBVisitChecker />
         
