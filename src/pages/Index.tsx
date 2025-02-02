@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { handleAuth } from "@/utils/mercadoLivreAuth";
 import { useToast } from "@/components/ui/use-toast";
-import ConnectionStatus from "@/components/ConnectionStatus";
 import MLBVisitChecker from "@/components/MLBVisitChecker";
 import ApiTester from "@/components/ApiTester";
 import StoreManager from "@/components/StoreManager";
@@ -29,10 +28,6 @@ const Index = () => {
         </h1>
 
         <StoreManager />
-        
-        <div className="mt-8">
-          <ConnectionStatus />
-        </div>
         
         <MLBVisitChecker />
         
