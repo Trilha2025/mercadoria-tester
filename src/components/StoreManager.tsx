@@ -148,7 +148,7 @@ const StoreManager = () => {
                   className="flex items-center gap-2"
                 >
                   <TestTube2 className="h-4 w-4" />
-                  API Tester
+                  Gerenciar
                 </Button>
                 {store.is_active ? (
                   <div className="flex items-center gap-2 text-green-600">
