@@ -11,6 +11,9 @@ interface Company {
   id: string;
   company_name: string;
   is_active: boolean;
+  ml_connection?: {
+    id: string;
+  } | null;
 }
 
 const StoreManager = () => {
@@ -24,7 +27,10 @@ const StoreManager = () => {
     try {
       const { data, error } = await supabase
         .from('companies')
-        .select('*')
+        .select(`
+          *,
+          ml_connection:mercadolivre_connections(id)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -93,7 +99,7 @@ const StoreManager = () => {
               <div className="space-y-1">
                 <h4 className="font-medium">{company.company_name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {company.is_active ? 'Ativa' : 'Inativa'}
+                  {company.ml_connection?.id ? 'Ativa' : 'Inativa'}
                 </p>
               </div>
               <Button
