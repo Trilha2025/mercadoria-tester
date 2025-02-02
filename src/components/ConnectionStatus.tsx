@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { User } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 
 const ConnectionStatus = () => {
   const [userData, setUserData] = useState<any>(null);
@@ -39,6 +39,10 @@ const ConnectionStatus = () => {
       const data = await response.json();
       console.log("Connected user data:", data);
       setUserData(data);
+      toast({
+        title: "Conectado",
+        description: `Conectado como ${data.nickname}`,
+      });
     } catch (error) {
       console.error('Error fetching user data:', error);
       localStorage.removeItem('ml_access_token');
@@ -52,6 +56,17 @@ const ConnectionStatus = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('ml_access_token');
+    localStorage.removeItem('ml_refresh_token');
+    localStorage.removeItem('code_verifier');
+    setUserData(null);
+    toast({
+      title: "Desconectado",
+      description: "Sua conta foi desconectada com sucesso",
+    });
   };
 
   if (isLoading) {
@@ -81,7 +96,28 @@ const ConnectionStatus = () => {
             <p className="text-green-800 font-medium">
               Conta Conectada
             </p>
+            <div className="mt-2 space-y-1">
+              <p className="text-green-700">
+                Nome: <span className="font-semibold">{userData.nickname}</span>
+              </p>
+              <p className="text-sm text-green-600">
+                ID da conta: {userData.id}
+              </p>
+              {userData.email && (
+                <p className="text-sm text-green-600">
+                  Email: {userData.email}
+                </p>
+              )}
+            </div>
           </div>
+          <Button
+            onClick={handleLogout}
+            variant="destructive"
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Desconectar
+          </Button>
         </div>
       ) : (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

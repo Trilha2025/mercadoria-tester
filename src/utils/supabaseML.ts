@@ -1,25 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MLConnection } from "@/types/mercadoLivre";
 
-export const saveMLConnection = async (userData: MLConnection, companyId: string): Promise<void> => {
+export const saveMLConnection = async (userData: MLConnection): Promise<void> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    console.log('Saving ML connection for company:', companyId);
+    console.log('Saving ML connection for user:', user.id);
 
     const connectionData = {
       ...userData,
       user_id: user.id,
-      company_id: companyId
     };
 
     const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
       .select()
-      .eq('company_id', companyId)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -31,7 +30,7 @@ export const saveMLConnection = async (userData: MLConnection, companyId: string
       const { error } = await supabase
         .from('mercadolivre_connections')
         .update(connectionData)
-        .eq('company_id', companyId);
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error updating ML connection:', error);
@@ -55,7 +54,7 @@ export const saveMLConnection = async (userData: MLConnection, companyId: string
   }
 };
 
-export const getMLConnection = async (companyId: string) => {
+export const getMLConnection = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -63,11 +62,11 @@ export const getMLConnection = async (companyId: string) => {
       return null;
     }
 
-    console.log('Fetching ML connection for company:', companyId);
+    console.log('Fetching ML connection for user:', user.id);
     const { data, error } = await supabase
       .from('mercadolivre_connections')
       .select()
-      .eq('company_id', companyId)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (error) {
@@ -82,18 +81,18 @@ export const getMLConnection = async (companyId: string) => {
   }
 };
 
-export const deleteMLConnection = async (companyId: string): Promise<void> => {
+export const deleteMLConnection = async (): Promise<void> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    console.log('Deleting ML connection for company:', companyId);
+    console.log('Deleting ML connection for user:', user.id);
     const { error } = await supabase
       .from('mercadolivre_connections')
       .delete()
-      .eq('company_id', companyId);
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error deleting ML connection:', error);

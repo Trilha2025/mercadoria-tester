@@ -5,18 +5,14 @@ import MLAuthButton from './mercadolivre/MLAuthButton';
 import MLEndpointTester from './mercadolivre/MLEndpointTester';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
 import { useCallback } from 'react';
-import { useParams } from 'react-router-dom';
 
 const ApiTester = () => {
-  const { storeId } = useParams<{ storeId: string }>();
   const { toast } = useToast();
-  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth(storeId || '');
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
 
   const handleLogout = useCallback(async () => {
-    if (!storeId) return;
-    
     try {
-      await disconnectMercadoLivre(storeId);
+      await disconnectMercadoLivre();
       await checkConnection();
       toast({
         title: "Sucesso",
@@ -30,11 +26,7 @@ const ApiTester = () => {
         variant: "destructive",
       });
     }
-  }, [checkConnection, toast, storeId]);
-
-  if (!storeId) {
-    return null;
-  }
+  }, [checkConnection, toast]);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
@@ -46,11 +38,10 @@ const ApiTester = () => {
             isAuthenticated={isAuthenticated}
             onLogout={handleLogout}
             userData={userData}
-            companyId={storeId}
           />
         </div>
 
-        <MLEndpointTester storeId={storeId} />
+        <MLEndpointTester />
       </Card>
     </div>
   );

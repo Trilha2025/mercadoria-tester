@@ -4,7 +4,6 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import MercadoLivreCallback from "@/pages/MercadoLivreCallback";
 import ApiTesterPage from "@/pages/ApiTesterPage";
-import CompanyManagementPage from "@/pages/CompanyManagementPage";
 import NotFound from "@/pages/NotFound";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { MainSidebar } from "@/components/MainSidebar";
@@ -20,9 +19,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/ml-callback" element={<MercadoLivreCallback />} />
+              <Route path="/callback" element={<MercadoLivreCallback />} />
               <Route path="/api-tester/:storeId" element={<ApiTesterPage />} />
-              <Route path="/company/:companyId" element={<CompanyManagementPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
