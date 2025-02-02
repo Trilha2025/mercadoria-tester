@@ -20,7 +20,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/callback" element={<MercadoLivreCallback />} />
+              <Route path="/ml-callback" element={<MercadoLivreCallback />} />
               <Route path="/api-tester/:storeId" element={<ApiTesterPage />} />
               <Route path="/company/:companyId" element={<CompanyManagementPage />} />
               <Route path="*" element={<NotFound />} />
