@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Store, CheckCircle2, Loader2, TestTube2 } from "lucide-react";
+import { Store, CheckCircle2, Loader2, TestTube2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import MLAuthButton from './mercadolivre/MLAuthButton';
 import { useMercadoLivreAuth } from '@/hooks/useMercadoLivreAuth';
@@ -105,6 +105,12 @@ const StoreManager = () => {
           <Store className="h-6 w-6" />
           Gerenciamento de Lojas
         </h2>
+        {isAuthenticated && (
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Adicionar Loja
+          </Button>
+        )}
       </div>
 
       {!isAuthenticated ? (
