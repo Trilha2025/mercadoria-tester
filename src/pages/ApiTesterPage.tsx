@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const ApiTesterPage = () => {
   const { storeId } = useParams();
   const [storeName, setStoreName] = useState('');
-  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth();
+  const { isAuthenticated, userData, checkConnection } = useMercadoLivreAuth(storeId);
 
   useEffect(() => {
     const fetchStoreName = async () => {
@@ -39,10 +39,11 @@ const ApiTesterPage = () => {
             isAuthenticated={isAuthenticated}
             onLogout={checkConnection}
             userData={userData}
+            companyId={storeId || ''}
           />
         </div>
 
-        <MLEndpointTester />
+        <MLEndpointTester storeId={storeId || ''} />
       </Card>
     </div>
   );

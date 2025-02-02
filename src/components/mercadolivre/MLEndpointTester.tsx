@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getMLConnection } from '@/utils/supabaseML';
 
-const MLEndpointTester = () => {
+interface MLEndpointTesterProps {
+  storeId: string;
+}
+
+const MLEndpointTester = ({ storeId }: MLEndpointTesterProps) => {
   const [endpoint, setEndpoint] = useState('');
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +26,7 @@ const MLEndpointTester = () => {
 
     setLoading(true);
     try {
-      const connection = await getMLConnection();
+      const connection = await getMLConnection(storeId);
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
@@ -48,7 +52,7 @@ const MLEndpointTester = () => {
     } finally {
       setLoading(false);
     }
-  }, [endpoint, toast]);
+  }, [endpoint, storeId, toast]);
 
   return (
     <>

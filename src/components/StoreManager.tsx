@@ -145,6 +145,7 @@ const StoreManager = () => {
               fetchStores();
             }}
             userData={userData}
+            companyId=""
           />
         )}
       </div>
@@ -161,6 +162,7 @@ const StoreManager = () => {
               fetchStores();
             }}
             userData={userData}
+            companyId=""
           />
         </div>
       ) : (
