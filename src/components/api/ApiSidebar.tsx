@@ -1,4 +1,4 @@
-import { Home, Api, Settings, ArrowLeftCircle } from "lucide-react";
+import { ArrowLeftCircle, Settings, Terminal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -27,7 +27,7 @@ export function ApiSidebar({ storeName }: ApiSidebarProps) {
     },
     {
       title: "API Tester",
-      icon: Api,
+      icon: Terminal,
       onClick: () => {},
       active: true,
     },
