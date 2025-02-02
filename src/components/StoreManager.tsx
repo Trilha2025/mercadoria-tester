@@ -112,8 +112,7 @@ const StoreManager = () => {
   };
 
   const handleManageCompany = (companyId: string) => {
-    // Navigate to company management page when implemented
-    console.log('Managing company:', companyId);
+    navigate(`/company/${companyId}`);
   };
 
   useEffect(() => {
