@@ -1,5 +1,31 @@
 import { supabase } from "@/integrations/supabase/client";
-import { generateCodeChallenge } from '@/utils/mercadoLivre';
+import type { MLTokenResponse } from "@/types/mercadoLivre";
+
+export const generateCodeChallenge = async () => {
+  const verifier = generateRandomString();
+  const challenge = await generateChallenge(verifier);
+  return { verifier, challenge };
+};
+
+const generateRandomString = () => {
+  const array = new Uint32Array(28);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
+};
+
+const generateChallenge = async (verifier: string) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+  return base64URLEncode(new Uint8Array(digest));
+};
+
+const base64URLEncode = (buffer: Uint8Array) => {
+  return btoa(String.fromCharCode.apply(null, [...buffer]))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+};
 
 export const initializeAuth = async () => {
   try {
@@ -11,16 +37,14 @@ export const initializeAuth = async () => {
     console.log('[ML Auth] Iniciando processo de autenticação para usuário:', user.id);
 
     const { verifier, challenge } = await generateCodeChallenge();
-    // console.log('[ML Auth] Code verifier gerado:', {
-    //   verifier: verifier.slice(0, 10) + '...',
-    //   challenge: challenge.slice(0, 10) + '...'
-    // });
 
     const { data: existingConnection, error: fetchError } = await supabase
       .from('mercadolivre_connections')
       .select()
       .eq('user_id', user.id)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('[ML Auth] Erro ao buscar conexão existente:', fetchError);
@@ -35,8 +59,11 @@ export const initializeAuth = async () => {
         .from('mercadolivre_connections')
         .update({
           code_verifier: verifier,
+          access_token: 'pending',
+          refresh_token: 'pending',
+          ml_user_id: 'pending',
         })
-        .eq('user_id', user.id)
+        .eq('id', existingConnection.id)
         .select()
         .single();
 
@@ -69,7 +96,7 @@ export const initializeAuth = async () => {
     const { data: verificationCheck } = await supabase
       .from('mercadolivre_connections')
       .select('code_verifier')
-      .eq('user_id', user.id)
+      .eq('id', connection.id)
       .single();
 
     if (!verificationCheck?.code_verifier) {
@@ -92,6 +119,33 @@ export const initializeAuth = async () => {
     console.error('[ML Auth] Error in initializeAuth:', error);
     throw error;
   }
+};
+
+export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<MLTokenResponse> => {
+  console.log('Code recebido:', code);
+
+  const bodyParams = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: import.meta.env.VITE_ML_CLIENT_ID,
+    client_secret: 'vYoUWQlJYl2nhOB9UXTDQPNJAXNbARMJ',
+    code: code,
+    redirect_uri: import.meta.env.VITE_ML_REDIRECT_URI,
+    code_verifier: codeVerifier
+  }).toString();
+
+  const { data, error } = await supabase.functions.invoke('exchange-ml-token', {
+    body: {
+      params: bodyParams
+    }
+  });
+
+  if (error) {
+    console.error('Erro na troca de token:', error);
+    throw new Error(`Failed to exchange code for token: ${JSON.stringify(error)}`);
+  }
+
+  console.log('Token obtido com sucesso');
+  return data;
 };
 
 export const disconnectMercadoLivre = async () => {
