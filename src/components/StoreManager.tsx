@@ -53,9 +53,22 @@ const StoreManager = () => {
   };
 
   const addStore = async () => {
-    if (!userData) return;
+    if (!userData) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Usuário não autenticado",
+      });
+      return;
+    }
 
     try {
+      // Get current user from Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data: existingConnection } = await supabase
         .from('mercadolivre_connections')
         .select('id')
@@ -78,6 +91,7 @@ const StoreManager = () => {
         .insert({
           store_name: storeName,
           ml_connection_id: existingConnection.id,
+          user_id: user.id, // Add the user_id field
         });
 
       if (error) throw error;
