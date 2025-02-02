@@ -21,7 +21,14 @@ const StoreManager = () => {
         .from('companies')
         .select(`
           *,
-          ml_connection:mercadolivre_connections(id)
+          ml_connection:mercadolivre_connections(
+            id,
+            ml_user_id,
+            ml_nickname,
+            ml_email,
+            access_token,
+            refresh_token
+          )
         `)
         .order('created_at', { ascending: false });
 
